@@ -1,0 +1,2 @@
+# PollenisatorCLI
+CLI for pollenisator
