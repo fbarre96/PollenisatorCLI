@@ -18,39 +18,50 @@ Options:
 # Major version released: 01/2021
 # @version: 1.0
 """
+import functools
+import sys
+from datetime import datetime
+from shlex import split
+import asyncio
+from docopt import DocoptExit, docopt
 from prompt_toolkit import PromptSession
+from prompt_toolkit import print_formatted_text
 from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.completion import WordCompleter, PathCompleter
-from shlex import split
-from docopt import docopt, DocoptExit
-import sys
-import functools
-from datetime import datetime
-
-from utils.utils import command, cls_commands,main_help, loadCfg, saveCfg, getClientConfigFilePath
-from utils.completer import IMCompleter
+from prompt_toolkit.completion import PathCompleter, WordCompleter, Completion
+from prompt_toolkit.document import Document
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.patch_stdout import patch_stdout
 from core.apiclient import APIClient
-from core.Modules.pentest import Pentest
+from core.FormModules.newPentestForm import NewPentestForm
 from core.Modules.module import Module
+from core.Modules.pentest import Pentest
+from utils.completer import IMCompleter
+from utils.utils import (CmdError, cls_commands, command,
+                         getClientConfigFilePath, loadCfg, main_help,
+                         print_error, print_formatted, saveCfg, style)
+
 
 @cls_commands
 class Pollenisator(Module):
     def __init__(self):
-        
         self.prompt_session = PromptSession(
-            'Pollenisator > ',
+            "Pollenisator #",
             auto_suggest=AutoSuggestFromHistory(),
             enable_history_search=True,
             complete_in_thread=True,
-            complete_while_typing=True
+            complete_while_typing=True,
+            style=style
         )
         self.prompt_session.path_completer = PathCompleter()
 
-        super().__init__("Main", None, "Main", "Pollenisator > ", IMCompleter(self), self.prompt_session)
-        self.contexts = [
-            Pentest(self, self.prompt_session),
-        ]
+        super().__init__("Pollenisator", None, "Main Menu", FormattedText([('class:title', "Pollenisator"),('class:angled_bracket', " > ")]), IMCompleter(self), self.prompt_session)
+
+        self.contexts = {
+            "pentest": Pentest(self, self.prompt_session),
+            "new pentest": NewPentestForm(self, self.prompt_session)
+        }
+
         args = docopt(__doc__, version=version)
         client_config = loadCfg(getClientConfigFilePath())
         if args["host"]:
@@ -60,7 +71,7 @@ class Pollenisator(Module):
         saveCfg(client_config, getClientConfigFilePath())
         apiclient = APIClient.getInstance()
         if not apiclient.tryConnection():
-            print("Could not connect to server. Use --host and --port option.")
+            print_error("Could not connect to server. Use --host and --port option.")
             return
         # Start in main module (this one)
         self.set_context(self)
@@ -73,38 +84,37 @@ class Pollenisator(Module):
                     bound_cmd_handler = functools.partial(getattr(self.current_context, command[0]), *command[1:])
                     run_in_terminal(bound_cmd_handler)
                 except TypeError:
-                    print (f"Error type")
+                    print_error(f"Error type")
                 except AttributeError as ae:
-                    print (f"Error with the command '{command[0]}':\n{ae}")
+                    print_error(f"The given commmand '{command[0]}' does not exist in this module.\nType 'help' to get the list of currently available commands\n")
                 except SystemExit:
                     pass
 
     def main_loop(self):
         while True:
-            try:
-                result = self.prompt_session.prompt()
-                if (self.current_context == self and result.strip().lower() == "exit"):
+            with patch_stdout():
+                try:
+                    result = self.prompt_session.prompt(style=style)
+                    if (self.current_context == self and result.strip().lower() == "exit"):
+                        break
+                    self.parse_result(result)
+                except KeyboardInterrupt:
+                    print("CTRL^C")
                     break
-                self.parse_result(result)
-            except KeyboardInterrupt:
-                print("CTRL^C")
-                break
 
     @command
-    def list(self):
-        """
-        Usage : list
+    def ls(self):
+        """Usage : ls
         
-        Description : list existings pentests
+        Description : ls existings pentests
         """  
         apiclient = APIClient.getInstance()
         pentests = "\n".join(apiclient.getPentestList())
-        print(f"Pentests:\n==========\n{pentests}\n")
+        print_formatted(f"Pentests:\n==========\n{pentests}", "important")
     
     @command
     def open(self, pentest_name):
-        """
-        Usage : open <pentest_name>
+        """Usage : open <pentest_name>
         
         Description : Open the given database name and get the CLI in pentesting mode.
 
@@ -113,12 +123,147 @@ class Pollenisator(Module):
         """  
         apiclient = APIClient.getInstance()
         if pentest_name not in apiclient.getPentestList():
-            print("This pentest does not exist. Create it or choose one in the list below.")
-            self.list()
+            print_error("This pentest does not exist. Create it or choose one in the list below.")
+            self.ls()
             return
         apiclient.setCurrentPentest(pentest_name)
-        self.context_switching("pentest")
-        self.prompt_session.message = f"{self.current_context.prompt} {pentest_name} > "
+        self.set_context(self.contexts["pentest"])
+        self.prompt_session.message = FormattedText([('class:title',f"{self.current_context.name}"),("class:subtitle", f" {pentest_name}"), ("class:angled_bracket", " > ")])
+
+    @command
+    def new(self):
+        """Usage : new
+        
+        Description : Start the pentest creation wizard
+        """ 
+        self.set_context(self.contexts["new pentest"])
+
+    @command
+    def delete(self, pentest_name):
+        """Usage : delete <pentest_name>
+        
+        Description : Delete the pentest given a pentest name
+        """ 
+        apiclient = APIClient.getInstance()
+        msg = FormattedText([("class:warning", "WARNING :"), ("class:normal", f" You are going to delete {pentest_name}"), (
+            "#ff0000", " permanently."), ("class:normal", "\nAre you sure? [No/yes]")])
+        print_formatted_text(msg)
+        result = input()
+        if result.lower() == "yes":
+            res = apiclient.doDeletePentest(pentest_name)
+            if res is None:
+                print_error(f"Could not delete pentest {pentest_name}")
+            elif not res:
+                print_error(f"Could not found pentest {pentest_name}")
+            else:
+                print_formatted(f"Successfully deleted {pentest_name}", "valid")
+
+    @command
+    def duplicate(self, from_pentest, to_pentest):
+        """Usage : duplicate <pentest_name> <to_pentest>
+
+        Description : Duplicate the given pentest to a new database
+        Arguments:
+            from_pentest: the pentest name to duplicate 
+            to_pentest: a name for the new pentest
+        """
+        apiclient = APIClient.getInstance()
+        res = apiclient.copyDb(from_pentest, to_pentest)
+        if res is None:
+            print_error("API call failed, undefined error. Check server for more info")
+        else:
+            print_formatted(f"{to_pentest} successfully created", "valid")
+
+    @command
+    def export(self, pentest_or_command, pentest_name=None):
+        """Usage: export pentest|commands <pentest_name>
+        
+        Description : Export a pentest database or the command database.
+
+        Arguments:
+            pentest_or_command: Either "pentest" or "commands". Choose if you want to export the command database or a pentest database. 
+            pentest_name: if "pentest" is given as 1st arg, the pentest name to export
+        """
+        apiclient = APIClient.getInstance()
+        if pentest_or_command == "pentest":
+            if pentest_name is None:
+                print_error("pentest was specified but no pentest name was given.")
+                return            
+            success, msg = apiclient.dumpDb(pentest_name)
+            if not success:
+                print_error(msg)
+            else:
+                print_formatted(f"Pentest successully exported : {msg}", "valid")
+        elif pentest_or_command == "commands":
+            success, msg = apiclient.dumpDb("pollenisator", "commands")
+            if not success:
+                print_error(msg)
+                return
+            success, msg = apiclient.dumpDb("pollenisator", "group_commands")
+            if not success:
+                print_error(msg)
+                return
+            print_formatted("Export completed in exports/pollenisator_commands.gz and exports/pollenisator_group_commands.gz", "valid")
+        else:
+            print_error("Invalid argument.")
+            self.help("export")
+    
+    @command
+    def import_commands(self, command_file):
+        """Usage: Import global commands
+
+        Description: Import the command database archive
+
+        Arguments:
+            command_file: relative path to command database compressed file 
+        """
+        apiclient = APIClient.getInstance()
+        try:
+            success = apiclient.importCommands(command_file)
+        except IOError:
+            print_error(f"Import failed. {command_file} was not found or is not a file.")
+            return 
+        if not success:
+            print_error("Commands import failed")
+        else:
+            print_formatted("Commands import completed", "valid")
+
+    @command
+    def import_pentest(self, pentest_file):
+        """Usage: Import pentest database
+
+        Description: Import the pentest database archive
+
+        Arguments:
+            pentest_file: relative path to a pentest database compressed archive file (.gz)
+        """
+        apiclient = APIClient.getInstance()
+        success = apiclient.importDb(pentest_file)
+        if not success:
+            print_error("Pentest database import failed")
+        else:
+            print_formatted("Pentest database import completed", "valid")
+
+
+    def getOptionsForCmd(self, cmd, cmd_args, complete_event):
+        """Returns a list of valid options for the given cmd
+        """  
+        apiclient = APIClient.getInstance()
+        if cmd in ["open", "delete", "duplicate"]:
+            print("getOptions open")
+            return apiclient.getPentestList()
+        elif cmd == "export":
+            if len(cmd_args) <= 1:
+                return ["pentest", "commands"]
+            elif len(cmd_args) == 2:
+                if cmd_args[0] == "pentest":
+                    return apiclient.getPentestList()
+        elif cmd in ["import_commands", "import_pentest"]:
+            return (Completion(completion.text, completion.start_position, display=completion.display) 
+                        for completion in self.prompt_session.path_completer.get_completions(Document(cmd_args[0]), complete_event))
+        elif cmd == "help":
+            return [""]+self._cmd_list
+        return []
 
 
 

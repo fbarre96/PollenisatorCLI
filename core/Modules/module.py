@@ -1,7 +1,9 @@
-from utils.utils import command, cls_commands
+from utils.utils import command, cls_commands, print_formatted
 from utils.utils import main_help
 import sys
 
+
+@cls_commands
 class Module:
     def __init__(self, name, parent_context, description, prompt, completer, prompt_session):
         self.name = name
@@ -10,14 +12,13 @@ class Module:
         self.prompt = prompt
         self.completer = completer
         self.prompt_session = prompt_session
-        self.contexts = []
+        self.contexts = {}
         self.current_context = None
     
     def context_switching(self, func):
-        for context in self.contexts:
-            if context.name == func:
-                self.set_context(context)
-                return True
+        if func in self.contexts.keys():
+            self.set_context(self.contexts[func])
+            return True
         return False
     
     def set_context(self, context):
@@ -33,8 +34,7 @@ class Module:
             self.parent_context.setCurrentContext(context)
 
     def getCommandHelp(self, command_help=""):
-        """
-        Usage : help
+        """Usage : help
         Description:
             Print this help menu 
         """        
@@ -63,16 +63,13 @@ class Module:
 {self.name} commands
 =================
 {self.description}
-List of available commands :\n"""
-
-        for x in self._cmd_list:
-            msg += f'\t{x}\n'
-        msg += f"""
-For more information about any commands hit : 
-        help <command name>
-        """
-        
+List of available commands :"""
         print(msg)
+        for x in self._cmd_list:
+            print_formatted(f'\t{x}', 'command')
+        print("For more information about any commands hit :")
+        print_formatted("help <command>", "cmd")
+        
 
     @command
     def exit(self):

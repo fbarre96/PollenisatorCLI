@@ -5,7 +5,7 @@ import io
 from datetime import datetime
 import sys
 from bson import ObjectId
-from utils.utils import JSONEncoder, JSONDecoder, loadCfg, getClientConfigFilePath
+from utils.utils import JSONEncoder, JSONDecoder, loadCfg, getClientConfigFilePath, print_error
 from shutil import copyfile
 
 proxies = {"http":"127.0.0.1:8080", "https":"127.0.0.1:8080"}
@@ -15,7 +15,7 @@ config_path = getClientConfigFilePath()
 if os.path.isfile(config_path):
     cfg = loadCfg(config_path)
 else:
-    print(f"No client config file found under {config_path}")
+    print_error(f"No client config file found under {config_path}")
     sys.exit(1)
 
 
@@ -139,6 +139,8 @@ class APIClient():
         response = requests.delete(api_url, headers=self.headers)
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        elif response.status_code == 404:
+            return False
         else:
             return None
 
@@ -149,7 +151,7 @@ class APIClient():
         if response.status_code == 200:
             return True, "Success"
         else:
-            return False, json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+            return False, response.content.decode('utf-8')
 
     def find(self, collection, pipeline=None, multi=True):
         return self.findInDb(self.getCurrentPentest(), collection, pipeline, multi)
@@ -444,7 +446,7 @@ class APIClient():
         if response.status_code == 200:
             dir_path = os.path.dirname(os.path.realpath(__file__))
             out_path = os.path.join(
-                dir_path, "../../exports/", pentest if collection == "" else pentest+"_"+collection)+".gz"
+                dir_path, "../exports/", pentest if collection == "" else pentest+"_"+collection)+".gz"
             with open(out_path, 'wb') as f:
                 f.write(response.content)
                 return True, out_path

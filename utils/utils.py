@@ -5,8 +5,14 @@ import time
 import requests
 import json
 import os
+import socket
 from datetime import datetime
 from bson import ObjectId
+from netaddr import IPNetwork, IPAddress
+from netaddr.core import AddrFormatError
+from prompt_toolkit import print_formatted_text
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.styles import Style
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -26,8 +32,8 @@ class JSONDecoder(json.JSONDecoder):
                 dct[k] = ObjectId(v.split('ObjectId|')[1])
         return dct
 
-class CmdError(Exception):
-    pass
+def CmdError(msg):
+    print_error(msg)
 
 def loadCfg(cfgfile):
     """
@@ -86,7 +92,7 @@ def command(func):
             if expected_args_count > 0:
                 msg += f"{expected_args_names} "
             msg += f"but received {len(cmd_args)-1}."
-            raise CmdError(msg)
+            return  CmdError(msg)
         return func(*args, **kwargs)
     return wrapper
 
@@ -96,9 +102,30 @@ def cls_commands(cls):
     for commandName in dir(cls):
         command = getattr(cls, commandName)
         if hasattr(command, '_command'):
-            cls._cmd_list.append(commandName)
+            cls._cmd_list.insert(0, commandName)
 
     return cls
+
+def stringToDate(datestring):
+    """Converts a string with format '%d/%m/%Y %H:%M:%S' to a python date object.
+    Args:
+        datestring: a string with format '%d/%m/%Y %H:%M:%S'
+    Returns:
+        the date python object if the given string is successfully converted, None otherwise"""
+    ret = None
+    if isinstance(datestring, str):
+        if datestring != "None":
+            ret = datetime.strptime(
+                datestring, '%d/%m/%Y %H:%M:%S')
+    return ret
+
+def dateToString(date):
+    """Converts a date object to a string with format '%d/%m/%Y %H:%M:%S'.
+    Args:
+        date: a python datetime object
+    Returns:
+         the date python object as a string if successfully converted, None otherwise"""
+    return date.strftime('%d/%m/%Y %H:%M:%S')
 
 def main_help():
 
@@ -123,5 +150,89 @@ Core commands
 {table.table}\n\n"""
     return msg
 
+# The style sheet.
+style = Style.from_dict({
+    'error': '#ff0066 bold',
+    'valid': '#11ff00',
+    'command': '#4444ff bold',
+    'cmd': 'italic',
+    'parameter': '#44ff00 italic',
+    'important': 'bold',
+    'title': 'bold #ebe534',
+    'subtitle': 'bold #34eb5f',
+    'angled_bracket': 'bold',
+    'normal': ''
+})
+def print_formatted(msg, cls):
+    text = FormattedText([
+        (f'class:{cls}', msg)
+    ])
+    print_formatted_text(text, style=style)
+
+def print_error(msg):
+    text = FormattedText([
+        ('class:error', 'ERROR : '),
+        ('class:normal', msg),
+    ])
+    print_formatted_text(text, style=style)
 
 
+    
+def isIp(ip):
+    """
+    Check if the given scope string is a network ip or a domain.
+    Args:
+        ip: the domain string or the network ipv4 range string
+    Returns:
+        Returns True if it is a network ipv4 range, False if it is a domain (any other possible case).
+    """
+    try:
+        IPAddress(ip)
+    except AddrFormatError:
+        return False
+    return True
+
+
+def isNetworkIp(domain_or_networks):
+    """
+    Check if the given scope string is a network ip or a domain.
+    Args:
+        domain_or_networks: the domain string or the network ipv4 range string
+    Returns:
+        Returns True if it is a network ipv4 range, False if it is a domain (any other possible case).
+    """
+    try:
+        IPNetwork(domain_or_networks)
+    except AddrFormatError:
+        return False
+    return True
+
+def performLookUp(domain):
+    """
+    Uses the socket module to get an ip from a domain.
+
+    Args:
+        domain: the domain to look for in dns
+
+    Returns:
+        Return the ip found from dns records, None if failed.
+    """
+    try:
+        return socket.gethostbyname(domain)
+    except socket.gaierror:
+        return None
+
+def fitNowTime(dated, datef):
+    """Check the current time on the machine is between the given start and end date.
+    Args:
+        dated: the starting date for the interval
+        datef: the ending date for the interval
+    Returns:
+        True if the current time is between the given interval. False otherwise.
+        If one of the args is None, returns False."""
+    today = datetime.now()
+    date_start = stringToDate(dated)
+    date_end = stringToDate(datef)
+    if date_start is None or date_end is None:
+        return False
+    return today > date_start and date_end > today
