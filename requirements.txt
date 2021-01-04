@@ -1,0 +1,4 @@
+docopt
+prompt_toolkit
+terminaltables
+colorclass

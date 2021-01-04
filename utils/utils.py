@@ -20,6 +20,8 @@ class JSONEncoder(json.JSONEncoder):
             return "ObjectId|"+str(o)
         elif isinstance(o, datetime):
             return str(o)
+        elif isinstance(o, set):
+            return list(o)
         return json.JSONEncoder.default(self, o)
 
 class JSONDecoder(json.JSONDecoder):
@@ -191,6 +193,15 @@ def isIp(ip):
     except AddrFormatError:
         return False
     return True
+
+def isDomain(domain_val):
+    """Check if the gien value could be a valid domain. 
+    Args:
+        domain_val: the string we want to know if it matches a domain
+    Returns:
+        bool
+    """
+    return re.match(r"^((?!-))(xn--)?[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]{0,1}\.(xn--)?([a-z0-9\-]{1,61}|[a-z0-9-]{1,30}\.[a-z]{2,})$", domain_val)
 
 
 def isNetworkIp(domain_or_networks):

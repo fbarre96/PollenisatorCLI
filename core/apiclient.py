@@ -8,8 +8,8 @@ from bson import ObjectId
 from utils.utils import JSONEncoder, JSONDecoder, loadCfg, getClientConfigFilePath, print_error
 from shutil import copyfile
 
-proxies = {"http":"127.0.0.1:8080", "https":"127.0.0.1:8080"}
-#proxies = {}
+#proxies = {"http":"127.0.0.1:8080", "https":"127.0.0.1:8080"}
+proxies = {}
 dir_path = os.path.dirname(os.path.realpath(__file__))  # fullpath to this file
 config_path = getClientConfigFilePath()
 if os.path.isfile(config_path):
@@ -164,6 +164,7 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
+            print(response.content.decode('utf-8'))
             return None
 
     def insert(self, collection, data):

@@ -41,6 +41,7 @@ from utils.utils import (CmdError, cls_commands, command,
                          getClientConfigFilePath, loadCfg, main_help,
                          print_error, print_formatted, saveCfg, style)
 
+from colorclass import Windows
 
 @cls_commands
 class Pollenisator(Module):
@@ -250,7 +251,6 @@ class Pollenisator(Module):
         """  
         apiclient = APIClient.getInstance()
         if cmd in ["open", "delete", "duplicate"]:
-            print("getOptions open")
             return apiclient.getPentestList()
         elif cmd == "export":
             if len(cmd_args) <= 1:
@@ -275,6 +275,7 @@ if __name__ == '__main__':
 |   (_)||(/,[ )|_) (_] | (_)[  
                    {version}            
 """)
+    Windows.enable(auto_colors=True, reset_atexit=True)  # Does nothing if not on Windows.
     pollenisator = Pollenisator()
     pollenisator.main_loop()
     
