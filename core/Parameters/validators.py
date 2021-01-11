@@ -7,4 +7,11 @@ def validateDate(value):
     return ""
 
 def validateBool(value):
-    return "" if value.lower() in ["true", "false"] else f"{value} is not a valide value. Expected format is 'true' or 'false'"
+    return "" if value.lower() in ["true", "false"] else f"{value} is not a valid value. Expected format is 'true' or 'false'"
+
+def validateInt(value):
+    try:
+        conversion = int(value)
+    except ValueError:
+        return f"{value} is not a valid number value."
+    return ""

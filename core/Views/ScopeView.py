@@ -1,6 +1,8 @@
 from core.Views.ViewElement import ViewElement
 from terminaltables import AsciiTable
 from core.Models.Tool import Tool
+from core.Models.Scope import Scope
+
 class ScopeView(ViewElement):
 
     @classmethod
@@ -8,6 +10,8 @@ class ScopeView(ViewElement):
         if len(scopes) >= 1:
             table_data = [['Scope', 'In wave', 'Tools : waiting', 'running', 'done']]
             for scope in scopes:
+                if isinstance(scope, dict):
+                    scope = Scope(scope)
                 tools = scope.getTools()
                 done = 0
                 running = 0

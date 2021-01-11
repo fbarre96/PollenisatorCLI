@@ -155,12 +155,22 @@ class APIClient():
 
     def find(self, collection, pipeline=None, multi=True):
         return self.findInDb(self.getCurrentPentest(), collection, pipeline, multi)
+
         
     def findInDb(self, pentest, collection, pipeline=None, multi=True):
         pipeline = {} if pipeline is None else pipeline
         api_url = '{0}find/{1}/{2}'.format(self.api_url_base, pentest, collection)
         data = {"pipeline":(json.dumps(pipeline, cls=JSONEncoder)).replace("'","\""), "many":multi}
         response = requests.post(api_url, headers=self.headers, data=json.dumps(data, cls=JSONEncoder),  proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        else:
+            print(response.content.decode('utf-8'))
+            return None
+
+    def search(self, query):
+        api_url = '{0}search/{1}'.format(self.api_url_base, self.getCurrentPentest())
+        response = requests.get(api_url, headers=self.headers, params={"s":query},  proxies=proxies, verify=False)
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:

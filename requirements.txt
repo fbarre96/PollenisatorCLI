@@ -2,3 +2,4 @@ docopt
 prompt_toolkit
 terminaltables
 colorclass
+lark-parser

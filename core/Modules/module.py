@@ -56,7 +56,7 @@ class Module:
         # Global help
         res = self.getCommandHelp(command_help)
         if res is not None:
-            print(res)
+            print_formatted(res)
             return
         msg = main_help()
         msg += f"""
@@ -64,10 +64,10 @@ class Module:
 =================
 {self.description}
 List of available commands :"""
-        print(msg)
+        print_formatted(msg)
         for x in self._cmd_list:
             print_formatted(f'\t{x}', 'command')
-        print("For more information about any commands hit :")
+        print_formatted("For more information about any commands hit :")
         print_formatted("help <command>", "cmd")
         
 

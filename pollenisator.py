@@ -81,13 +81,23 @@ class Pollenisator(Module):
         if len(result):
             if not self.context_switching(result):
                 command = split(result)
+                if not command:
+                    return
                 try:
-                    bound_cmd_handler = functools.partial(getattr(self.current_context, command[0]), *command[1:])
-                    run_in_terminal(bound_cmd_handler)
+                    # check if command first args is in current context
+                    func_to_call = getattr(self.current_context, command[0], None)
+                    if callable(func_to_call): # run it with the remaining args using functools.partial
+                        bound_cmd_handler = functools.partial(func_to_call, *command[1:])
+                        run_in_terminal(bound_cmd_handler)
+                    else:  # check if a default exist and call it with all args
+                        default_func_to_call = getattr(self.current_context, "cmd_default", None)
+                        if callable(default_func_to_call):
+                            bound_cmd_handler = functools.partial(default_func_to_call, *command[0:])
+                            run_in_terminal(bound_cmd_handler)
+                        else:
+                            print_error(f"The given commmand '{command[0]}' does not exist in this module.\nType 'help' to get the list of currently available commands\n")
                 except TypeError:
                     print_error(f"Error type")
-                except AttributeError as ae:
-                    print_error(f"The given commmand '{command[0]}' does not exist in this module.\nType 'help' to get the list of currently available commands\n")
                 except SystemExit:
                     pass
 
@@ -128,9 +138,8 @@ class Pollenisator(Module):
             self.ls()
             return
         apiclient.setCurrentPentest(pentest_name)
+        self.contexts["pentest"].prompt = FormattedText([('class:title',f"{self.current_context.name}"),("class:subtitle", f" {pentest_name}"), ("class:angled_bracket", " > ")])
         self.set_context(self.contexts["pentest"])
-        self.prompt_session.message = FormattedText([('class:title',f"{self.current_context.name}"),("class:subtitle", f" {pentest_name}"), ("class:angled_bracket", " > ")])
-
     @command
     def new(self):
         """Usage : new

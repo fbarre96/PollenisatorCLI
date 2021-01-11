@@ -253,11 +253,11 @@ class Tool(Element):
             string
         """
         if self.lvl == "network" or self.lvl == "domain":
-            return str(self.scope)+" "+str(self)
+            return str(self.scope)+" "+str(self) + f" ({', '.join(self.getStatus())})"
         elif self.lvl == "ip":
-            return str(self.ip)+" "+str(self)
+            return str(self.ip)+" "+str(self)+ f" ({', '.join(self.getStatus())})"
         else:
-            return str(self.ip)+":"+str(self.proto+"/"+self.port)+" "+str(self)
+            return str(self.ip)+":"+str(self.proto+"/"+self.port)+" "+str(self)+ f" ({', '.join(self.getStatus())})"
 
     def getResultFile(self):
         """Returns the result file of this tool

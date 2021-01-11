@@ -224,12 +224,14 @@ class Defect(Element):
         """
         ret = ""
         if self.ip is not None:
-            ret += str(self.ip)
+            if self.ip != "":
+                ret += str(self.ip)
         if self.proto is not None and self.port is not None:
-            if self.proto != "tcp":
-                ret += ":"+self.proto+"/"+self.port
-            else:
-                ret += ":"+self.port
+            if self.port != "":
+                if self.proto != "tcp":
+                    ret += ":"+self.proto+"/"+self.port
+                else:
+                    ret += ":"+self.port
         ret += " "+self.__str__()
         return ret
 

@@ -1,8 +1,10 @@
 from utils.utils import command, cls_commands, print_error, print_formatted
+from utils.completer import ParamCompleter
 from core.Modules.module import Module
 from core.apiclient import APIClient
 from terminaltables import AsciiTable
-
+from prompt_toolkit.formatted_text import FormattedText
+@cls_commands
 class FormModule(Module):
     def __init__(self, name, parent_context, description, prompt, completer, prompt_session):
         super().__init__(name, parent_context, description, prompt, completer, prompt_session)
@@ -23,13 +25,15 @@ class FormModule(Module):
             if field.name.lower() == parameter_name.lower():
                 msg = field.setValue(value)
                 if msg == "":
-                    return True
+                    return field
                 else:
                     print_error(msg)
-                    return False
+                    return None
         print_error(f"Parameter {parameter_name} does not exist. Use command show to list available parameters")
-        return False
+        return None
+
     
+
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
         """
         Returns a list of valid options for the given cmd
@@ -39,10 +43,10 @@ class FormModule(Module):
                 return [x.name for x in self.fields]
             else: # param value to complete
                 for field in self.fields:
-                    if cmd_args[-2].lower() == field.name.lower():
-                        return field.getPossibleValues()
+                    if cmd_args[0].lower() == field.name.lower():
+                        return field.getPossibleValues(cmd_args[1:])
         elif cmd == "help":
-            return [""]+self._cmd_list+[x.name for x in self.fields]
+            return [""]+self._cmd_list+[x.name for x in self.fields] # pylint: disable=no-member
         
         return []
 
@@ -57,7 +61,9 @@ class FormModule(Module):
         
         for param in self.fields:
             paramName = param.name+"*" if param.required else param.name
-            table_data.append([paramName, param.getValue()])
+            paramName = paramName+"-" if param.readonly else paramName
+            if not param.hidden:
+                table_data.append([paramName, param.getStrValue()])
         table = AsciiTable(table_data)
         table.inner_column_border = False
         table.inner_footing_row_border = False
@@ -73,14 +79,14 @@ class FormModule(Module):
 
     def getParameterHelp(self, parameter_name):
         for x in self.fields:
-            if x.name.lower() == parameter_name.lower():
+            if x.name.lower() == parameter_name.lower() and not x.hidden:
                 return x.getHelp()
         return None
     
     def checkRequiredFields(self):
         for field in self.fields:
             if field.required and field.getValue() == "":
-                print_error("Parameter {field.name} is required")
+                print_error(f"Parameter {field.name} is required")
                 return False
         return True
     
@@ -98,17 +104,76 @@ class FormModule(Module):
         if res is not None:
             print(res)
             return
-        print(f"""
+        print_formatted(f"""
 {self.name} form
 =================
 {self.description}
 COMMANDS:""")
-        for x in self._cmd_list:
+        for x in self._cmd_list: # pylint: disable=no-member
             print_formatted(f'\t{x}', 'command')
-        print("=================")
-        print("""PARAMETERS :""")
+        print_formatted("=================")
+        print_formatted("""PARAMETERS :""")
         for x in self.fields:
-            print_formatted(f'\t{x.name}', 'parameter')
-        print("""
+            if not x.hidden:
+                print_formatted(f'\t{x.name}', 'parameter')
+        print_formatted("""
 For more information about any parameter or command type :""")
         print_formatted("help <parameter_name>", 'cmd')
+
+    @command
+    def wizard(self):
+        """Usage: wizard
+
+        Description : Will prompt every parameters 
+        """
+        self.set_context(FormWizard(self, self.prompt_session, self))
+        
+
+class FormWizard(Module):
+    def __init__(self, parent_context, prompt_session, form):
+        super().__init__('Wizard', parent_context, "Fill the form with a wizard. TAB to autocomplete", ">", None, prompt_session)
+        self.form = form
+        print_formatted("Wizard started : type help or exit at any moment. Type skip for not required parameters that you don't want to set", "info")
+        self.current_field = -1
+        self.nextField()
+    
+    def nextField(self):
+        self.current_field += 1
+        if self.current_field >= len(self.form.fields):
+            self.parent_context.show()
+            print_formatted("Check values and use the command to validate this form (help)", "warning")
+            self.exit()
+        else:
+            if self.form.fields[self.current_field].hidden:
+                self.nextField()
+            else:
+                required = "*" if self.form.fields[self.current_field].required else ""
+                self.prompt = FormattedText(
+                    [('class:title', f"{self.parent_context.name} wizard"), ("class:subtitle", f" Set value of {self.form.fields[self.current_field].name}{required}"), ("class:angled_bracket", " > ")])
+                self.prompt_session.message = FormattedText(
+                    [('class:title', f"{self.parent_context.name} wizard"), ("class:subtitle", f" Set value of  {self.form.fields[self.current_field].name}{required}"), ("class:angled_bracket", " > ")])
+                self.prompt_session.completer = ParamCompleter(self.form.fields[self.current_field].completor)
+                helper = self.form.fields[self.current_field].getHelp()
+                if helper is not None:
+                    print_formatted(helper, 'parameter')
+
+    def cmd_default(self, *args):
+        args_str = " ".join(list(args))
+        error_msg = ""
+
+        if args_str == "skip":
+            if self.form.fields[self.current_field].required:
+                error_msg = f"{self.form.fields[self.current_field].name} cannot be skiped as it required"
+        else:
+            error_msg = self.form.fields[self.current_field].setValue(args_str)
+        if error_msg != "":
+            print_error(error_msg)
+        else:
+            self.nextField()
+    
+    @command
+    def help(self):
+        res = self.form.fields[self.current_field].getHelp()
+        if res is not None:
+            print_formatted(res, 'parameter')
+        

@@ -12,6 +12,7 @@ class Command(Element):
     """
 
     coll_name = "commands"
+    possible_lvls = ["network", "domain", "ip", "port", "wave"]
 
     def __init__(self, valuesFromDb=None):
         """Constructor
@@ -28,7 +29,7 @@ class Command(Element):
                         valuesFromDb.get("priority", 0), valuesFromDb.get(
                             "max_thread", 1),
                         valuesFromDb.get("text", ""), valuesFromDb.get(
-                            "lvl", "network"),
+                            "lvl", ""),
                         valuesFromDb.get("ports", ""),
                         bool(valuesFromDb.get("safe", True)), valuesFromDb.get("types", []), valuesFromDb.get("indb", "pollenisator"), valuesFromDb.get("timeout", 300), valuesFromDb.get("infos", {}))
 
@@ -73,7 +74,7 @@ class Command(Element):
         """
         ret = self._id
         apiclient = APIClient.getInstance()
-        apiclient.delete("commands", ret)
+        return apiclient.delete("commands", ret)
         
 
     def addInDb(self):

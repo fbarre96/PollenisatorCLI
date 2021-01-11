@@ -13,6 +13,7 @@ from netaddr.core import AddrFormatError
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
+from inspect import getfullargspec
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -28,7 +29,7 @@ class JSONDecoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
         
-    def object_hook(self, dct):
+    def object_hook(self, dct): # pylint: disable=method-hidden
         for k,v in dct.items():
             if 'ObjectId|' in str(v):
                 dct[k] = ObjectId(v.split('ObjectId|')[1])
@@ -81,8 +82,12 @@ def command(func):
         # Func.__annotations__ allows to get arguments
         # required by the function func
         # self is not counted nor shown to the user
-        expected_args_count = func.__code__.co_argcount - 1
-        expected_args_names = func.__code__.co_varnames[1:expected_args_count+1]
+        func_args = getfullargspec(func)
+        if func_args[1] is not None:  # varargs set
+            return func(*args, **kwargs)
+        expected_args_count = len(func_args[0]) - 1
+        expected_args_names = func_args[1:]
+        
         expected_args_defaults = func.__defaults__  if func.__defaults__ is not None else []
         if not(len(cmd_args)-1 <= expected_args_count and len(cmd_args)-1 >= expected_args_count - len(expected_args_defaults)):
             msg = "This command expected "
@@ -94,6 +99,7 @@ def command(func):
             if expected_args_count > 0:
                 msg += f"{expected_args_names} "
             msg += f"but received {len(cmd_args)-1}."
+            msg += "\n"+ func.__doc__
             return  CmdError(msg)
         return func(*args, **kwargs)
     return wrapper
@@ -165,7 +171,7 @@ style = Style.from_dict({
     'angled_bracket': 'bold',
     'normal': ''
 })
-def print_formatted(msg, cls):
+def print_formatted(msg, cls="normal"):
     text = FormattedText([
         (f'class:{cls}', msg)
     ])
@@ -191,6 +197,8 @@ def isIp(ip):
     try:
         IPAddress(ip)
     except AddrFormatError:
+        return False
+    except ValueError:
         return False
     return True
 

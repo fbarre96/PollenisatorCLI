@@ -1,6 +1,7 @@
 from core.Views.ViewElement import ViewElement
 from terminaltables import AsciiTable
 from core.Models.Tool import Tool
+from core.Models.Wave import Wave
 
 class WaveView(ViewElement):
 
@@ -9,6 +10,8 @@ class WaveView(ViewElement):
         if len(waves) >= 1:
             table_data = [['Wave', 'Is running', 'Tools : waiting', 'running', 'done']]
             for wave in waves:
+                if isinstance(wave, dict):
+                    wave = Wave(wave)
                 tools = wave.getTools()
                 done = 0
                 running = 0
