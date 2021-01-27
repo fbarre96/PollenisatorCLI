@@ -4,8 +4,10 @@ import re
 import time
 import requests
 import json
+import subprocess
 import os
 import socket
+from threading import Timer
 from datetime import datetime
 from bson import ObjectId
 from netaddr import IPNetwork, IPAddress
@@ -96,8 +98,6 @@ def command(func):
             else:
                 msg += f" between {expected_args_count - len(expected_args_defaults)} and {expected_args_count}"
             msg += f" arguments "
-            if expected_args_count > 0:
-                msg += f"{expected_args_names} "
             msg += f"but received {len(cmd_args)-1}."
             msg += "\n"+ func.__doc__
             return  CmdError(msg)
@@ -162,6 +162,7 @@ Core commands
 style = Style.from_dict({
     'error': '#ff0066 bold',
     'valid': '#11ff00',
+    'success': '#11ff00',
     'command': '#4444ff bold',
     'cmd': 'italic',
     'parameter': '#44ff00 italic',
@@ -169,6 +170,7 @@ style = Style.from_dict({
     'title': 'bold #ebe534',
     'subtitle': 'bold #34eb5f',
     'angled_bracket': 'bold',
+    'warning': '#eded42',
     'normal': ''
 })
 def print_formatted(msg, cls="normal"):
@@ -255,3 +257,58 @@ def fitNowTime(dated, datef):
     if date_start is None or date_end is None:
         return False
     return today > date_start and date_end > today
+
+
+def execute(command, timeout=None, printStdout=True):
+    """
+    Execute a bash command and print output
+
+    Args:
+        command: A bash command
+        timeout: a date in the futur when the command will be stopped if still running or None to not use this option, default as None.
+        printStdout: A boolean indicating if the stdout should be printed. Default to True.
+
+    Returns:
+        Return the return code of this command
+
+    Raises:
+        Raise a KeyboardInterrupt if the command was interrupted by a KeyboardInterrupt (Ctrl+c)
+    """
+
+    try:
+        proc = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        time.sleep(1) #HACK Break if not there when launching fast custom tools on local host
+        try:
+            if timeout is not None:
+                if isinstance(timeout, float):
+                    timeout = (timeout-datetime.now()).total_seconds()
+                    timer = Timer(timeout, proc.kill)
+                    timer.start()
+                else:
+                    if timeout.year < datetime.now().year+1:
+                        timeout = (timeout-datetime.now()).total_seconds()
+                        timer = Timer(timeout, proc.kill)
+                        timer.start()
+            stdout, stderr = proc.communicate(None, timeout)
+            if printStdout:
+                stdout = stdout.decode('utf-8')
+                stderr = stderr.decode('utf-8')
+                if str(stdout) != "":
+                    print(str(stdout))
+                if str(stderr) != "":
+                    print(str(stderr))
+        except Exception as e:
+            print(str(e))
+            proc.kill()
+            return -1
+        finally:
+            if timeout is not None:
+                if isinstance(timeout, float):
+                    timer.cancel()
+                else:
+                    if timeout.year < datetime.now().year+1:
+                        timer.cancel()
+        return proc.returncode
+    except KeyboardInterrupt as e:
+        raise e

@@ -5,6 +5,7 @@ from core.apiclient import APIClient
 from bson.objectid import ObjectId
 from datetime import datetime
 import re
+import multiprocessing
 
 class Tool(Element):
     """
@@ -196,6 +197,18 @@ class Tool(Element):
             output_dir += Tool.__sanitize(port_dir)+"/"
         return output_dir
 
+    def launch(self, parser="", checks=True, worker=""):
+        from AutoScanWorker import executeCommand
+        apiclient = APIClient.getInstance()
+        launchableToolId = self.getId()
+        if worker == "" or worker == "localhost":
+            thread = None
+            thread = multiprocessing.Process(target=executeCommand, args=(
+                apiclient.getCurrentPentest(), str(launchableToolId), parser))
+            thread.start()
+            self.markAsRunning(worker)
+        else:
+            apiclient.sendLaunchTask(self.getId(), parser, checks, worker)
     
 
     def update(self, pipeline_set=None):
@@ -252,12 +265,15 @@ class Tool(Element):
         Returns:
             string
         """
+        statusStr = ', '.join(self.getStatus())
+        if statusStr.strip() == "":
+            statusStr = "not done"
         if self.lvl == "network" or self.lvl == "domain":
-            return str(self.scope)+" "+str(self) + f" ({', '.join(self.getStatus())})"
+            return str(self.scope)+" "+str(self) + f" ({statusStr})"
         elif self.lvl == "ip":
-            return str(self.ip)+" "+str(self)+ f" ({', '.join(self.getStatus())})"
+            return str(self.ip)+" "+str(self)+ f" ({statusStr})"
         else:
-            return str(self.ip)+":"+str(self.proto+"/"+self.port)+" "+str(self)+ f" ({', '.join(self.getStatus())})"
+            return str(self.ip)+":"+str(self.proto+"/"+self.port)+" "+str(self)+ f" ({statusStr})"
 
     def getResultFile(self):
         """Returns the result file of this tool

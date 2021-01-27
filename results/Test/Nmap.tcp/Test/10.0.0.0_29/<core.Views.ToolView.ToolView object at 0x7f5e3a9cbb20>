@@ -1,0 +1,350 @@
+# Nmap 7.91 scan initiated Mon Jan 25 15:50:38 2021 as: nmap -n -v -sT -sV -T3 -Pn --randomize-hosts -p21,22,23,25,53,80,81,88,139,389,443,445,513,514,587,636,990,1080,1099,1194,3128,3389,4443,5900,5985,5986,8000,8001,8009,8080,8081,8443,9000,9999,10443 -oN /home/barre/bin/opensource/fbarre96/PollenisatorCLI/./results/Test/Nmap.tcp/Test/10.0.0.0_29/Nmap.tcp_1611586238.3956609.nmap 10.0.0.0/29
+Nmap scan report for 10.0.0.2
+Host is up (0.0016s latency).
+
+PORT      STATE  SERVICE         VERSION
+21/tcp    closed ftp
+22/tcp    closed ssh
+23/tcp    closed telnet
+25/tcp    closed smtp
+53/tcp    closed domain
+80/tcp    open   http            Mrvl-R2_0
+81/tcp    closed hosts2-ns
+88/tcp    closed kerberos-sec
+139/tcp   closed netbios-ssn
+389/tcp   closed ldap
+443/tcp   open   ssl/https       Mrvl-R2_0
+445/tcp   closed microsoft-ds
+513/tcp   closed login
+514/tcp   closed shell
+587/tcp   closed submission
+636/tcp   closed ldapssl
+990/tcp   closed ftps
+1080/tcp  closed socks
+1099/tcp  closed rmiregistry
+1194/tcp  closed openvpn
+3128/tcp  closed squid-http
+3389/tcp  closed ms-wbt-server
+4443/tcp  closed pharos
+5900/tcp  closed vnc
+5985/tcp  closed wsman
+5986/tcp  closed wsmans
+8000/tcp  closed http-alt
+8001/tcp  closed vcom-tunnel
+8009/tcp  closed ajp13
+8080/tcp  open   http-proxy?
+8081/tcp  closed blackice-icecap
+8443/tcp  closed https-alt
+9000/tcp  closed cslistener
+9999/tcp  closed abyss
+10443/tcp closed cirrossp
+2 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at https://nmap.org/cgi-bin/submit.cgi?new-service :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port80-TCP:V=7.91%I=7%D=1/25%Time=600EDAC6%P=x86_64-unknown-linux-gnu%r
+SF:(GetRequest,21F0,"HTTP/1\.1\x20200\x20OK\r\nContent-Length:\x20\x20\x20
+SF:\x20\x20\x20\x208887\r\nExpires:\x20Thu,\x2001\x20Jan\x201970\x2000:00:
+SF:00\x20GMT\r\nContent-Type:\x20text/html;\x20charset=utf-8\r\nServer:\x2
+SF:0Mrvl-R2_0\r\nCache-Control:\x20no-cache\r\nConnection:\x20keep-alive\r
+SF:\nX-Frame-Options:\x20SAMEORIGIN\r\nX-Content-Type-Options:\x20nosniff\
+SF:r\n\r\n<\?xml\x20version=\"1\.0\"\x20encoding=\"UTF-8\"\?>\n<!DOCTYPE\x
+SF:20HTML\x20PUBLIC\x20\"-//W3C//DTD\x20HTML\x204\.01//EN\"\x20\"http://ww
+SF:w\.w3\.org/TR/html4/strict\.dtd\">\n<html>\n<head>\n<meta\x20http-equiv
+SF:=\"Content-Type\"\x20content=\"text/html;\x20charset=utf-8\">\n<title>H
+SF:P\x20Color\x20LaserJet\x20Pro\x20MFP\x20M177fw&nbsp;&nbsp;&nbsp;10\.0\.
+SF:0\.2</title>\n<link\x20href=\"/SSI/defaultnew\.css\"\x20type=\"text/css
+SF:\"\x20rel=\"stylesheet\"\x20media=\"screen,print\">\n<script\x20type=\"
+SF:text/javascript\"\x20src=\"/SSI/global\.js\"></script>\n<script\x20type
+SF:=\"text/javascript\"\x20src=\"/SSI/buttonManager\.js\"></script>\n<scri
+SF:pt\x20type=\"text/javascript\"\x20src=\"/SSI/validate\.js\"></script>\n
+SF:\n</head>\n<body>\n<noscript>\x20<div\x20id=\"WirelessAlertBox\"\x20cla
+SF:ss=\"alertbox\">\x20<t");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port443-TCP:V=7.91%T=SSL%I=7%D=1/25%Time=600EDAD1%P=x86_64-unknown-linu
+SF:x-gnu%r(GetRequest,AE,"HTTP/1\.1\x20404\x20Not\x20Found\r\nContent-Leng
+SF:th:0\r\nServer:\x20Mrvl-R2_0\r\nCache-Control:\x20no-cache\r\nConnectio
+SF:n:\x20keep-alive\r\nX-Frame-Options:\x20SAMEORIGIN\r\nX-Content-Type-Op
+SF:tions:\x20nosniff\r\n\r\n");
+
+Nmap scan report for 10.0.0.1
+Host is up.
+
+PORT      STATE    SERVICE         VERSION
+21/tcp    filtered ftp
+22/tcp    filtered ssh
+23/tcp    filtered telnet
+25/tcp    filtered smtp
+53/tcp    filtered domain
+80/tcp    filtered http
+81/tcp    filtered hosts2-ns
+88/tcp    filtered kerberos-sec
+139/tcp   filtered netbios-ssn
+389/tcp   filtered ldap
+443/tcp   filtered https
+445/tcp   filtered microsoft-ds
+513/tcp   filtered login
+514/tcp   filtered shell
+587/tcp   filtered submission
+636/tcp   filtered ldapssl
+990/tcp   filtered ftps
+1080/tcp  filtered socks
+1099/tcp  filtered rmiregistry
+1194/tcp  filtered openvpn
+3128/tcp  filtered squid-http
+3389/tcp  filtered ms-wbt-server
+4443/tcp  filtered pharos
+5900/tcp  filtered vnc
+5985/tcp  filtered wsman
+5986/tcp  filtered wsmans
+8000/tcp  filtered http-alt
+8001/tcp  filtered vcom-tunnel
+8009/tcp  filtered ajp13
+8080/tcp  filtered http-proxy
+8081/tcp  filtered blackice-icecap
+8443/tcp  filtered https-alt
+9000/tcp  filtered cslistener
+9999/tcp  filtered abyss
+10443/tcp filtered cirrossp
+
+Nmap scan report for 10.0.0.3
+Host is up (0.00051s latency).
+
+PORT      STATE  SERVICE         VERSION
+21/tcp    closed ftp
+22/tcp    closed ssh
+23/tcp    closed telnet
+25/tcp    closed smtp
+53/tcp    closed domain
+80/tcp    open   http            Apache httpd
+81/tcp    closed hosts2-ns
+88/tcp    closed kerberos-sec
+139/tcp   closed netbios-ssn
+389/tcp   closed ldap
+443/tcp   open   ssl/http        Apache httpd
+445/tcp   closed microsoft-ds
+513/tcp   closed login
+514/tcp   closed shell
+587/tcp   closed submission
+636/tcp   closed ldapssl
+990/tcp   closed ftps
+1080/tcp  closed socks
+1099/tcp  closed rmiregistry
+1194/tcp  closed openvpn
+3128/tcp  closed squid-http
+3389/tcp  closed ms-wbt-server
+4443/tcp  closed pharos
+5900/tcp  closed vnc
+5985/tcp  closed wsman
+5986/tcp  closed wsmans
+8000/tcp  closed http-alt
+8001/tcp  closed vcom-tunnel
+8009/tcp  closed ajp13
+8080/tcp  closed http-proxy
+8081/tcp  closed blackice-icecap
+8443/tcp  closed https-alt
+9000/tcp  closed cslistener
+9999/tcp  closed abyss
+10443/tcp closed cirrossp
+
+Nmap scan report for 10.0.0.5
+Host is up (0.0024s latency).
+
+PORT      STATE    SERVICE         VERSION
+21/tcp    filtered ftp
+22/tcp    filtered ssh
+23/tcp    filtered telnet
+25/tcp    filtered smtp
+53/tcp    filtered domain
+80/tcp    open     http            Apache httpd
+81/tcp    filtered hosts2-ns
+88/tcp    filtered kerberos-sec
+139/tcp   filtered netbios-ssn
+389/tcp   filtered ldap
+443/tcp   open     ssl/http        Apache httpd
+445/tcp   filtered microsoft-ds
+513/tcp   filtered login
+514/tcp   filtered shell
+587/tcp   filtered submission
+636/tcp   filtered ldapssl
+990/tcp   filtered ftps
+1080/tcp  filtered socks
+1099/tcp  filtered rmiregistry
+1194/tcp  filtered openvpn
+3128/tcp  filtered squid-http
+3389/tcp  filtered ms-wbt-server
+4443/tcp  filtered pharos
+5900/tcp  filtered vnc
+5985/tcp  filtered wsman
+5986/tcp  filtered wsmans
+8000/tcp  filtered http-alt
+8001/tcp  filtered vcom-tunnel
+8009/tcp  filtered ajp13
+8080/tcp  filtered http-proxy
+8081/tcp  filtered blackice-icecap
+8443/tcp  filtered https-alt
+9000/tcp  filtered cslistener
+9999/tcp  filtered abyss
+10443/tcp filtered cirrossp
+
+Nmap scan report for 10.0.0.0
+Host is up (0.0000060s latency).
+
+PORT      STATE    SERVICE         VERSION
+21/tcp    filtered ftp
+22/tcp    filtered ssh
+23/tcp    filtered telnet
+25/tcp    filtered smtp
+53/tcp    filtered domain
+80/tcp    filtered http
+81/tcp    filtered hosts2-ns
+88/tcp    filtered kerberos-sec
+139/tcp   filtered netbios-ssn
+389/tcp   filtered ldap
+443/tcp   filtered https
+445/tcp   filtered microsoft-ds
+513/tcp   filtered login
+514/tcp   filtered shell
+587/tcp   filtered submission
+636/tcp   filtered ldapssl
+990/tcp   filtered ftps
+1080/tcp  filtered socks
+1099/tcp  filtered rmiregistry
+1194/tcp  filtered openvpn
+3128/tcp  filtered squid-http
+3389/tcp  filtered ms-wbt-server
+4443/tcp  filtered pharos
+5900/tcp  filtered vnc
+5985/tcp  filtered wsman
+5986/tcp  filtered wsmans
+8000/tcp  filtered http-alt
+8001/tcp  filtered vcom-tunnel
+8009/tcp  filtered ajp13
+8080/tcp  filtered http-proxy
+8081/tcp  filtered blackice-icecap
+8443/tcp  filtered https-alt
+9000/tcp  filtered cslistener
+9999/tcp  filtered abyss
+10443/tcp filtered cirrossp
+
+Nmap scan report for 10.0.0.7
+Host is up (0.00092s latency).
+
+PORT      STATE  SERVICE         VERSION
+21/tcp    closed ftp
+22/tcp    closed ssh
+23/tcp    closed telnet
+25/tcp    closed smtp
+53/tcp    closed domain
+80/tcp    open   http            Apache httpd
+81/tcp    closed hosts2-ns
+88/tcp    closed kerberos-sec
+139/tcp   closed netbios-ssn
+389/tcp   closed ldap
+443/tcp   open   ssl/http        Apache httpd
+445/tcp   closed microsoft-ds
+513/tcp   closed login
+514/tcp   closed shell
+587/tcp   closed submission
+636/tcp   closed ldapssl
+990/tcp   closed ftps
+1080/tcp  closed socks
+1099/tcp  closed rmiregistry
+1194/tcp  closed openvpn
+3128/tcp  closed squid-http
+3389/tcp  closed ms-wbt-server
+4443/tcp  closed pharos
+5900/tcp  closed vnc
+5985/tcp  closed wsman
+5986/tcp  closed wsmans
+8000/tcp  closed http-alt
+8001/tcp  closed vcom-tunnel
+8009/tcp  closed ajp13
+8080/tcp  closed http-proxy
+8081/tcp  closed blackice-icecap
+8443/tcp  closed https-alt
+9000/tcp  closed cslistener
+9999/tcp  closed abyss
+10443/tcp closed cirrossp
+
+Nmap scan report for 10.0.0.4
+Host is up (0.00034s latency).
+
+PORT      STATE  SERVICE         VERSION
+21/tcp    closed ftp
+22/tcp    closed ssh
+23/tcp    closed telnet
+25/tcp    closed smtp
+53/tcp    closed domain
+80/tcp    closed http
+81/tcp    closed hosts2-ns
+88/tcp    closed kerberos-sec
+139/tcp   closed netbios-ssn
+389/tcp   closed ldap
+443/tcp   open   ssl/http        Apache httpd
+445/tcp   closed microsoft-ds
+513/tcp   closed login
+514/tcp   closed shell
+587/tcp   closed submission
+636/tcp   closed ldapssl
+990/tcp   closed ftps
+1080/tcp  closed socks
+1099/tcp  closed rmiregistry
+1194/tcp  closed openvpn
+3128/tcp  closed squid-http
+3389/tcp  closed ms-wbt-server
+4443/tcp  closed pharos
+5900/tcp  closed vnc
+5985/tcp  closed wsman
+5986/tcp  closed wsmans
+8000/tcp  closed http-alt
+8001/tcp  closed vcom-tunnel
+8009/tcp  closed ajp13
+8080/tcp  closed http-proxy
+8081/tcp  closed blackice-icecap
+8443/tcp  closed https-alt
+9000/tcp  closed cslistener
+9999/tcp  closed abyss
+10443/tcp closed cirrossp
+
+Nmap scan report for 10.0.0.6
+Host is up (0.00026s latency).
+
+PORT      STATE  SERVICE         VERSION
+21/tcp    closed ftp
+22/tcp    closed ssh
+23/tcp    closed telnet
+25/tcp    closed smtp
+53/tcp    closed domain
+80/tcp    closed http
+81/tcp    closed hosts2-ns
+88/tcp    closed kerberos-sec
+139/tcp   closed netbios-ssn
+389/tcp   closed ldap
+443/tcp   closed https
+445/tcp   closed microsoft-ds
+513/tcp   closed login
+514/tcp   closed shell
+587/tcp   closed submission
+636/tcp   closed ldapssl
+990/tcp   closed ftps
+1080/tcp  closed socks
+1099/tcp  closed rmiregistry
+1194/tcp  closed openvpn
+3128/tcp  closed squid-http
+3389/tcp  closed ms-wbt-server
+4443/tcp  closed pharos
+5900/tcp  closed vnc
+5985/tcp  closed wsman
+5986/tcp  closed wsmans
+8000/tcp  closed http-alt
+8001/tcp  closed vcom-tunnel
+8009/tcp  closed ajp13
+8080/tcp  closed http-proxy
+8081/tcp  closed blackice-icecap
+8443/tcp  closed https-alt
+9000/tcp  closed cslistener
+9999/tcp  closed abyss
+10443/tcp closed cirrossp
+
+Read data files from: /usr/bin/../share/nmap
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Mon Jan 25 15:51:01 2021 -- 8 IP addresses (8 hosts up) scanned in 22.95 seconds

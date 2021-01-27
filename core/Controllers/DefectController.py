@@ -4,6 +4,8 @@ class DefectController(ElementController):
     
 
     def paramNameToDbName(self, param_name):
+        if param_name == "types":
+            return "type"
         return param_name
 
     @classmethod
@@ -12,7 +14,7 @@ class DefectController(ElementController):
     
     @classmethod
     def getImpacts(cls):
-        return ["Mineur", "Important"," Majeur", "Critique", "N/A"]
+        return ["Mineur", "Important","Majeur", "Critique", "N/A"]
     
     @classmethod
     def getRisks(cls):

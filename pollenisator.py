@@ -18,15 +18,15 @@ Options:
 # Major version released: 01/2021
 # @version: 1.0
 """
-import functools
 import sys
 from datetime import datetime
 from shlex import split
 import asyncio
 from docopt import DocoptExit, docopt
 from prompt_toolkit import PromptSession
+from prompt_toolkit import prompt
 from prompt_toolkit import print_formatted_text
-from prompt_toolkit.application import run_in_terminal
+#from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import PathCompleter, WordCompleter, Completion
 from prompt_toolkit.document import Document
@@ -34,8 +34,10 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.patch_stdout import patch_stdout
 from core.apiclient import APIClient
 from core.FormModules.newPentestForm import NewPentestForm
+from core.FormModules.settingsForms import PollenisatorSettings
 from core.Modules.module import Module
 from core.Modules.pentest import Pentest
+from core.Modules.commandtemplate import CommandTemplate
 from utils.completer import IMCompleter
 from utils.utils import (CmdError, cls_commands, command,
                          getClientConfigFilePath, loadCfg, main_help,
@@ -60,7 +62,9 @@ class Pollenisator(Module):
 
         self.contexts = {
             "pentest": Pentest(self, self.prompt_session),
-            "new pentest": NewPentestForm(self, self.prompt_session)
+            "new pentest": NewPentestForm(self, self.prompt_session),
+            "command_templates": CommandTemplate(self, self.prompt_session),
+            "global_settings": PollenisatorSettings(self, self.prompt_session),
         }
 
         args = docopt(__doc__, version=version)
@@ -86,18 +90,17 @@ class Pollenisator(Module):
                 try:
                     # check if command first args is in current context
                     func_to_call = getattr(self.current_context, command[0], None)
-                    if callable(func_to_call): # run it with the remaining args using functools.partial
-                        bound_cmd_handler = functools.partial(func_to_call, *command[1:])
-                        run_in_terminal(bound_cmd_handler)
+                    if callable(func_to_call): # run it with the remaining args 
+                        func_to_call(*command[1:])
                     else:  # check if a default exist and call it with all args
                         default_func_to_call = getattr(self.current_context, "cmd_default", None)
                         if callable(default_func_to_call):
-                            bound_cmd_handler = functools.partial(default_func_to_call, *command[0:])
-                            run_in_terminal(bound_cmd_handler)
+                            default_func_to_call(*command[0:])
                         else:
                             print_error(f"The given commmand '{command[0]}' does not exist in this module.\nType 'help' to get the list of currently available commands\n")
-                except TypeError:
+                except TypeError as e:
                     print_error(f"Error type")
+                    print(e)
                 except SystemExit:
                     pass
 
@@ -110,7 +113,7 @@ class Pollenisator(Module):
                         break
                     self.parse_result(result)
                 except KeyboardInterrupt:
-                    print("CTRL^C")
+                    print_formatted_text("CTRL^C")
                     break
 
     @command
@@ -122,6 +125,21 @@ class Pollenisator(Module):
         apiclient = APIClient.getInstance()
         pentests = "\n".join(apiclient.getPentestList())
         print_formatted(f"Pentests:\n==========\n{pentests}", "important")
+
+    @command
+    def command_templates(self):
+        """Usage : command_templates 
+        
+        Description : Open the submodule to edit command templates for every pentest
+        """
+        self.set_context(self.contexts["command_templates"])
+    @command
+    def global_settings(self):
+        """Usage : settings 
+        
+        Description : Open the pollensiator  glboal settings module
+        """
+        self.set_context(self.contexts["settings"])
     
     @command
     def open(self, pentest_name):
@@ -156,9 +174,9 @@ class Pollenisator(Module):
         """ 
         apiclient = APIClient.getInstance()
         msg = FormattedText([("class:warning", "WARNING :"), ("class:normal", f" You are going to delete {pentest_name}"), (
-            "#ff0000", " permanently."), ("class:normal", "\nAre you sure? [No/yes]")])
+            "#ff0000", " permanently.")])
         print_formatted_text(msg)
-        result = input()
+        result = prompt('Confirm deletion ? No/yes > ')
         if result.lower() == "yes":
             res = apiclient.doDeletePentest(pentest_name)
             if res is None:
@@ -278,7 +296,7 @@ class Pollenisator(Module):
 
 if __name__ == '__main__':
     version = 1.0
-    print(f"""
+    print_formatted(f"""
 .__    ..              ,       
 [__) _ || _ ._ * __ _.-+- _ ._.
 |   (_)||(/,[ )|_) (_] | (_)[  

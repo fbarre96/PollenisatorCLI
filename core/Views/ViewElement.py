@@ -4,7 +4,7 @@ from core.FormModules.formModule import FormModule
 from utils.completer import IMCompleter
 from prompt_toolkit.formatted_text import FormattedText
 from utils.utils import command, cls_commands, print_error, print_formatted_text, print_formatted
-from core.Parameters.parameter import Parameter
+from core.Parameters.parameter import Parameter, TableParameter
 from core.apiclient import APIClient
 
 
@@ -13,12 +13,17 @@ class ViewElement(FormModule):
     children_object_types = dict()
     name = "view"
 
-    def __init__(self, controller, parent_context, prompt_session):
+    def __init__(self, controller, parent_context, prompt_session, **kwargs):
+        self.parent_context = parent_context
         self.controller = controller
-        super().__init__(self.__class__.__name__, parent_context, f"View/Edit this {self.__class__.name} fields", FormattedText(
-            [('class:title', f"{parent_context.name}"), ("class:subtitle", f" Edit {self.__class__.name} {controller.getDetailedString()}"), ("class:angled_bracket", " > ")]),
-            IMCompleter(super()), prompt_session)
-        self.is_insert = False
+        self.prompt_session = prompt_session
+        self.updatePrompt()
+        self.is_insert = kwargs.get("is_insert", False)
+
+    def updatePrompt(self):
+        super().__init__(self.__class__.name, self.parent_context, f"View/Edit this {self.__class__.name} fields", FormattedText(
+            [('class:title', f"{self.parent_context.name}"), ("class:subtitle", f" Edit {self.__class__.name} {self.controller.getDetailedString()}"), ("class:angled_bracket", " > ")]),
+            IMCompleter(self), self.prompt_session)
     
     @classmethod
     def print_info(cls, objs):
@@ -36,7 +41,7 @@ class ViewElement(FormModule):
         return string
     
     @command
-    def set(self, parameter_name, value):
+    def set(self, parameter_name, value, *args):
         """Usage : set <parameter_name> <value>
         
         Description : Set the parameter to the given value
@@ -45,9 +50,11 @@ class ViewElement(FormModule):
             parameter_name  the parameter to change
             value           the value to give to the parameter
         """ 
+        if args:
+            value += " ".join(args) 
         field_updated = super().set(parameter_name, value)
         if field_updated is not None and not self.is_insert:
-            self.controller.doUpdate({parameter_name:field_updated.getValue()})
+            self.controller.doUpdate({field_updated.name:field_updated.getValue()})
     
     @command
     def submit(self):
@@ -67,10 +74,11 @@ class ViewElement(FormModule):
         Description: Delete this element from database
         """
         msg = FormattedText([("class:warning", "WARNING :"), ("class:normal", f" You are going to delete {self.controller.getDetailedString()}"), (
-            "#ff0000", " permanently."), ("class:normal", "\nAre you sure? [No/yes]")])
+            "#ff0000", " permanently."), ("class:normal", "\nAre you sure? ")])
         print_formatted_text(msg)
-        result = input()
-        if result.lower() == "yes":
+        from prompt_toolkit.shortcuts import confirm
+        result = confirm("")
+        if result:
             res = self.controller.doDelete()
             if int(res) == 1:
                 print_formatted(f"Successfully delete this {self.__class__.name}", "valid")
@@ -82,6 +90,7 @@ class ViewElement(FormModule):
         Description: print info of this element
         """
         super().show()
+        print_formatted("\n")
         self.__class__.print_info([self.controller.model])
 
     def validateTag(self, value):
@@ -109,9 +118,22 @@ class ViewElement(FormModule):
         if object_type in self.__class__.children_object_types:
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(self.controller.model.getDbKey())
             for obt in objects:
-                print(obt.getDetailedString())
+                print_formatted_text(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString()))
             return True
         return False
+
+    @command
+    def tools(self):
+        """Usage: tools
+
+        Description: Interact with tools associated with this object
+        """
+        from core.Modules.ToolModule import ToolModule
+        if "tools" in self.__class__.children_object_types:
+            tools = [tool for tool in self.__class__.children_object_types["tools"]["model"].fetchObjects(self.controller.model.getDbKey())]
+            self.set_context(ToolModule(self.controller.model.getDetailedString()+" Tools", self, self.prompt_session, tools))
+        else:
+            print_error("This context cannot have tools attached to it")
 
     
     @command
@@ -141,15 +163,32 @@ class ViewElement(FormModule):
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
         """Returns a list of valid options for the given cmd
         """  
-        ret = super.getOptionsForCmd(cmd, cmd_args, complete_event)
-        if ret:
-            return ret
-        if cmd in ["ls", "insert"]:
+        
+        if cmd == "ls":
             return list(self.__class__.children_object_types.keys())
+        elif cmd == "insert":
+            return [x[:-1] for x in (self.__class__.children_object_types.keys())]
         elif cmd == "edit":
             return self.autoCompleteInfo(cmd_args, complete_event)
+        elif cmd == "set":
+            ret = []
+            if len(cmd_args) == 1:
+                params = cmd_args[0].split(".")
+                field = self.getFieldByName(params[0])
+                if isinstance(field, TableParameter):
+                    for key in field.getKeys():
+                        ret.append(cmd_args[0]+"."+key)
+            if ret:
+                return ret
+        ret = super().getOptionsForCmd(cmd, cmd_args, complete_event)
+        if ret:
+            return ret
         return []
 
+    def getFieldByName(self, name):
+        for field in self.fields:
+            if field.name == name:
+                return field
 
     @command
     def insert(self, object_type):
@@ -160,12 +199,11 @@ class ViewElement(FormModule):
         view = None
         for children_object_type in self.__class__.children_object_types:
             classe = self.__class__.children_object_types[children_object_type]
-            if object_type == children_object_type:
-                view = classe["view"](classe["controller"](classe["model"]({self.controller.getDbKey()})), self, self.prompt_session)
+            if object_type+"s" == children_object_type:
+                view = classe["view"](classe["controller"](classe["model"](self.controller.getDbKey())), self, self.prompt_session, is_insert=True)
         if view is None:
             print_error(f"{object_type} is not a valid children level object type to insert.")
         else:
-            view.is_insert = True
             self.set_context(view)
 
     def autoCompleteInfo(self, cmd_args, complete_event):

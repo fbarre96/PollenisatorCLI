@@ -165,7 +165,7 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
-            print(response.content.decode('utf-8'))
+            print_error(response.content.decode('utf-8'))
             return None
 
     def search(self, query):
@@ -174,7 +174,7 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
-            print(response.content.decode('utf-8'))
+            print_error(response.content.decode('utf-8'))
             return None
 
     def insert(self, collection, data):
@@ -324,6 +324,7 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
+            print_error(json.loads(response.content.decode('utf-8'), cls=JSONDecoder))
             return None
 
     def addCustomTool(self, port_iid, tool_name):
@@ -495,7 +496,7 @@ class APIClient():
             ext = os.path.splitext(templateName)[-1]
             basename = clientName.strip()+"_"+contractName.strip()
             out_name = str(timestr)+"_"+basename
-            out_path = os.path.join(dir_path, "../../exports/",out_name+ext)
+            out_path = os.path.join(dir_path, "../exports/",out_name+ext)
             with open(out_path, 'wb') as f:
                 f.write(response.content)
                 return os.path.normpath(out_path)
@@ -512,8 +513,29 @@ class APIClient():
         api_url = '{0}report/templates/download'.format(self.api_url_base)
         response = requests.get(api_url, headers=self.headers, params={"templateName":templateName},proxies=proxies, verify=False)
         if response.status_code == 200:
-            out_path = os.path.join(dir_path, "../../exports/",templateName)
+            out_path = os.path.join(dir_path, "../exports/",templateName)
             with open(out_path, 'wb') as f:
                 f.write(response.content)
                 return os.path.normpath(out_path)
         return None
+
+    def listPlugins(self):
+        api_url = '{0}tools/plugins'.format(self.api_url_base)
+        response = requests.get(api_url, headers=self.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        return []
+
+    def getDefectTable(self):
+        api_url = '{0}report/{1}/defects'.format(self.api_url_base, self.getCurrentPentest())
+        response = requests.get(api_url, headers=self.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        return []
+
+    def moveDefect(self, defect_id, target_id):
+        api_url = '{0}report/{1}/defects/move/{2}/{3}'.format(self.api_url_base, self.getCurrentPentest(), defect_id, target_id)
+        response = requests.post(api_url, headers=self.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        return response.content.decode("utf-8")

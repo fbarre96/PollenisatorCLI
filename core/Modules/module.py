@@ -78,3 +78,8 @@ List of available commands :"""
         """
         if self.parent_context is not None:
             self.set_context(self.parent_context)
+
+    def getOptionsForCmd(self, cmd, cmd_args, complete_event):
+        """Returns a list of valid options for the given cmd
+        """ 
+        return []

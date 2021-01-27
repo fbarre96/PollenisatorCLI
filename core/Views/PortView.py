@@ -1,31 +1,36 @@
 from core.Models.Defect import Defect
 from core.Models.Port import Port
 from core.Models.Tool import Tool
+from core.Models.Ip import Ip
 from core.Views.ToolView import ToolView
 from core.Views.DefectView import DefectView
 from core.Views.ViewElement import ViewElement
 from core.Controllers.ToolController import ToolController
 from core.Controllers.DefectController import DefectController
+from core.Controllers.PortController import PortController
 from terminaltables import AsciiTable
-from utils.utils import command
-from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
+from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
+from utils.utils import command, cls_commands
+import webbrowser
 
 def validatePort(value):
     return value >= 0 and value <= 65535
+
+@cls_commands   
 class PortView(ViewElement):
     name = "port"
     children_object_types = {"defects":{"view":DefectView, "controller":DefectController, "model":Defect}, "tools":{"view":ToolView, "controller":ToolController, "model":Tool}}
 
-    def __init__(self, controller, parent_context, prompt_session):
-        super().__init__(controller, parent_context, prompt_session)
+    def __init__(self, controller, parent_context, prompt_session, **kwargs):
+        super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = [
-            Parameter("ip", readonly=self.controller.model.ip, required=True, default=self.controller.model.ip, helper="the ip this port is opened on"),
+            ComboParameter("ip", Ip.fetchObjects({}),readonly=self.controller.model.ip != "", required=True, default=self.controller.model.ip, helper="the ip this port is opened on"),
             IntParameter("port", readonly=self.controller.model.port != "", required=True,  validator=validatePort, default=self.controller.model.port, helper="Open port number"),
             ComboParameter("proto", ["tcp","udp"], default="tcp", required=True, helper="IP transport protocol contacting this port", readonly=self.controller.model.proto != ""),
             Parameter("service",default=self.controller.model.service, helper="Service running detected on this port by a tool (nmap by default)"),    
             Parameter("product",default=self.controller.model.product, helper="Product name running detected on this port by a tool (nmap by default)"),    
-            Parameter("notes", helper="A space to take notes. Will appear in word report"),
-            Parameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
+            Parameter("notes", default=self.controller.model.notes, helper="A space to take notes. Will appear in word report"),
+            ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
         ]
 
     def identifyPentestObjectsFromString(self, obj_str):
@@ -57,6 +62,8 @@ class PortView(ViewElement):
             for port in ports:
                 if isinstance(port, dict):
                     port = Port(port)
+                if isinstance(port, PortController):
+                    port = port.model
                 tools = port.getTools()
                 done = 0
                 running = 0
@@ -82,3 +89,17 @@ class PortView(ViewElement):
         else:
             #No case
             pass
+
+    @command
+    def browser(self):
+        """Usage : browser
+        Description: open the ip:port in a web browser
+        """
+        port_m = self.controller.model
+        ssl = port_m.infos.get("SSL", None) == "True" or ("https" in port_m.service or "ssl" in port_m.service)
+        url = "https://" if ssl else "http://"
+        if port_m.service == "ftp":
+            url = "ftp://"
+        url += port_m.ip+":"+str(port_m.port)+"/"
+        webbrowser.open_new_tab(url)
+    

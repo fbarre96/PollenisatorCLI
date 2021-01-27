@@ -28,7 +28,7 @@ class IMCompleter(Completer):
                 for option in options:
                     if isinstance(option, str):
                         if option.startswith(word_before_cursor) and option != word_before_cursor:
-                            yield Completion(option, -len(word_before_cursor))
+                            yield Completion(option, -len(word_before_cursor), option.split(",")[-1] if option.split(",")[-1].strip()!=""else option)
                     else: # Completion type expected
                         yield option
 
@@ -44,10 +44,5 @@ class ParamCompleter(Completer):
         possibleValues = self.completor_func(cmd_args)
         for possibleValue in possibleValues:
             if possibleValue.startswith(word_before_cursor) and possibleValue != word_before_cursor:
-                yield Completion(possibleValue, -len(word_before_cursor))
+                yield Completion(possibleValue, -len(word_before_cursor), possibleValue.split(",")[-1])
 
-def completeDate(args):
-    from datetime import date
-    today = date.today()
-    d1 = dateToString(today)
-    return [d1]

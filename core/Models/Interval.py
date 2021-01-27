@@ -98,7 +98,10 @@ class Interval(Element):
         Returns:
             Returns the string "Interval".
         """
-        return "Interval"
+        return f"{self.dated} - {self.datef}"
+
+    def getDetailedString(self):
+        return self.wave+":"+str(self)
 
     @classmethod
     def _translateDateString(cls, datestring):

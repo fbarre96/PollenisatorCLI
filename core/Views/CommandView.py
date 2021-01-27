@@ -6,11 +6,13 @@ from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, Li
 from terminaltables import AsciiTable
 from core.settings import Settings
 import re
+from utils.utils import command, cls_commands
 
+@cls_commands
 class CommandView(ViewElement):
     name = "command"
-    def __init__(self, controller, parent_context, prompt_session):
-        super().__init__(controller, parent_context, prompt_session)
+    def __init__(self, controller, parent_context, prompt_session, **kwargs):
+        super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = [
             Parameter("name",  required=True, readonly=self.controller.model.name != "", default=self.controller.model.name,
                       helper="The command name"),
@@ -24,7 +26,7 @@ class CommandView(ViewElement):
             IntParameter("priority", default=self.controller.model.priority, helper="Priority of this command compared to others. 0 = highest priority"),
             IntParameter("threads", default=self.controller.model.max_thread, helper="Set a maximum of parallele execution of this command for ONE worker"),
             ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
-            HiddenParameter("idb", default=self.controller.model.indb)
+            HiddenParameter("indb", default=self.controller.model.indb)
         ]
         
 
@@ -35,12 +37,14 @@ class CommandView(ViewElement):
             for command in commands:
                 if isinstance(command, dict):
                     command = Command(command)
+                if isinstance(command, CommandController):
+                    command = command.model
                 table_data.append([command.name, command.text, str(command.lvl), str(command.priority), str(command.safe), str(command.max_thread)])
                 table = AsciiTable(table_data)
                 table.inner_column_border = False
                 table.inner_footing_row_border = False
                 table.inner_heading_row_border = True
-                table.inner_row_border = False
+                table.inner_row_border = True
                 table.outer_border = False
             print(table.table)
         else:

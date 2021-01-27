@@ -53,7 +53,7 @@ class CommandGroup(Element):
         """
         ret = self._id
         apiclient = APIClient.getInstance()
-        apiclient.delete("group_commands", ret)
+        return apiclient.delete("group_commands", ret)
 
     def addInDb(self):
         """

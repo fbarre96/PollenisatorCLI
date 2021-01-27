@@ -9,18 +9,25 @@ from core.Views.PortView import PortView
 from core.Views.ToolView import ToolView
 from core.Controllers.PortController import PortController
 from core.Controllers.ToolController import ToolController
-from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
+from core.Controllers.IpController import IpController
+from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, TableParameter
+from utils.utils import command, cls_commands
+from prompt_toolkit import print_formatted_text, HTML
+import webbrowser
 
+
+@cls_commands
 class IpView(ViewElement):
     name = "ip"
     children_object_types = {"ports":{"view":PortView, "controller":PortController, "model":Port}, "tools":{"view":ToolView, "controller": ToolController,"model":Tool}}
 
-    def __init__(self, controller, parent_context, prompt_session):
-        super().__init__(controller, parent_context, prompt_session)
+    def __init__(self, controller, parent_context, prompt_session, **kwargs):
+        super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = [
-            Parameter("ip", readonly=self.controller.model.ip != "", required = True,  default=self.controller.model.ip, helper="an ip"),
-            Parameter("notes", helper="A space to take notes. Will appear in word report"),
-            Parameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
+            Parameter("ip", readonly=self.controller.model.ip != "", required = True, default=self.controller.model.ip, helper="an ip"),
+            Parameter("notes", default=self.controller.model.notes, helper="A space to take notes. Will appear in word report"),
+            ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
+            TableParameter("infos", ["Info", "Value"], default=self.controller.model.infos, required=False, helper="Extra info table")
         ]
 
     
@@ -30,8 +37,15 @@ class IpView(ViewElement):
         #PORT test
         parent_db_key = self.controller.getDbKey()
         try:
-            port_n = int(obj_str)
-            parent_db_key["port"] = port_n
+            parts = obj_str.split("/") 
+            if len(parts) == 1:
+                port_n = int(obj_str)
+                proto = "tcp"
+            else:
+                port_n = int(parts[1])
+                proto = parts[0]
+            parent_db_key["port"] = str(port_n)
+            parent_db_key["proto"] = proto
             port_found = Port.fetchObject(parent_db_key)
             if port_found is not None:
                 return PortView, [PortController(port_found)]
@@ -62,11 +76,11 @@ class IpView(ViewElement):
                 search_pipeline["lvl"] = "ip"
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(search_pipeline)
             for obt in objects:
-                print(obt.getDetailedString())
+                print_formatted_text(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString()))
             return True
         return False
 
-   
+    
     @classmethod
     def print_info(cls, ips):
         if len(ips) >= 1:
@@ -74,6 +88,8 @@ class IpView(ViewElement):
             for ip in ips:
                 if isinstance(ip, dict):
                     ip = Ip(ip)
+                if isinstance(ip, IpController):
+                    ip = ip.model
                 tools = ip.getTools()
                 done = 0
                 running = 0
@@ -93,7 +109,7 @@ class IpView(ViewElement):
                     strs_ports.append(f"{port_m.port}/{port_m.proto}:{port_m.service}" if port_m.proto != "tcp" else f"{port_m.port}:{port_m.service}")
                 ip_str = ip.ip
                 if not ip.in_scopes:
-                    ip_str = Color("{grey}"+ip_str+"{/grey}")
+                    ip_str = Color("{autoblack}"+ip_str+"{/autoblack}")
                 else:
                     ip_str = ViewElement.colorWithTags(ip.getTags(), ip.ip)
                 table_data.append([ip_str, len(ip.in_scopes) > 0, ", ".join(strs_ports), str(not_done+running+done), str(not_done), str(running), str(done)])
@@ -107,3 +123,10 @@ class IpView(ViewElement):
         else:
             #No case
             pass
+
+    @command
+    def browser(self):
+        """Usage : browser
+        Description: open the ip in a web browser
+        """
+        webbrowser.open_new_tab(self.controller.model.ip)
