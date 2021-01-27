@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+results/
+exports/
+!exports/pollenisator_commands.gz
+!exports/pollenisator_group_commands.gz
+
+
