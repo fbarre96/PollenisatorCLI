@@ -30,7 +30,7 @@ class IMCompleter(Completer):
                         options.sort()
                 for option in options:
                     if isinstance(option, str):
-                        if option.startswith(word_before_cursor) and option != word_before_cursor:
+                        if word_before_cursor.lower() in option.lower() and option != word_before_cursor:
                             yield Completion(option, -len(word_before_cursor), option.split(",")[-1] if option.split(",")[-1].strip()!=""else option)
                     else: # Completion type expected
                         yield option
