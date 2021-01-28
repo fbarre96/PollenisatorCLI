@@ -165,7 +165,6 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
-            print_error(response.content.decode('utf-8'))
             return None
 
     def search(self, query):

@@ -38,7 +38,8 @@ def executeCommand(calendarName, toolId, parser=""):
     apiclient = APIClient.getInstance()
     apiclient.setCurrentPentest(calendarName)
     toolModel = Tool.fetchObject({"_id":ObjectId(toolId)})
-    print("Executing "+str(toolModel.text))
+    if toolModel is None:
+        return False, "Tool failed to be created"
     command_o = toolModel.getCommand()
         
     msg = ""
