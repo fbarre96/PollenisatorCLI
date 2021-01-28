@@ -6,10 +6,11 @@ from core.Views.Dashboard import Dashboard
 from prompt_toolkit import prompt
 import time
 from core.apiclient import APIClient
+from core.settings import Settings
 from core.Models.Wave import Wave
 from core.Models.Tool import Tool
 from AutoScanWorker import executeCommand
-
+from prompt_toolkit.shortcuts import ProgressBar
 
 @cls_commands
 class Module:
@@ -160,13 +161,25 @@ List of available commands :"""
         if APIClient.getInstance().getCurrentPentest() is None:
             print_error("Use open to connect to a database first")
             return
+        from core.Views.ViewElement import ViewElement
         cmdArgs = " ".join(args)
         cmdName = os.path.splitext(os.path.basename(args[0]))[0]
         cmdName +="::"+str(time.time()).replace(" ","-")
         wave = Wave().initialize("Custom commands")
         wave.addInDb()
         tool = Tool()
-        tool.initialize(cmdName, "Custom commands", None, None, None, None, "wave", text=cmdArgs, dated="None", datef="None", scanner_ip="localhost", infos={"args":" ".join(args)})
+        if isinstance(self, ViewElement):
+            db_key = self.controller.model.getDbKey()
+            lvl = "wave"
+            if db_key.get("port", None) is not None:
+                lvl = "port"
+            elif db_key.get("ip", None) is not None:
+                lvl = "ip"
+            elif db_key.get("scope", None) is not None:
+                lvl = "scope"
+            tool.initialize(cmdName, db_key.get("wave", "Custom commands"), db_key.get("scope", None), db_key.get("ip", None), db_key.get("port", None), db_key.get("proto", None), lvl, text=cmdArgs, dated="None", datef="None", scanner_ip="localhost", infos={"args":" ".join(args)})
+        else:
+            tool.initialize(cmdName, "Custom commands", None, None, None, None, "wave", text=cmdArgs, dated="None", datef="None", scanner_ip="localhost", infos={"args":" ".join(args)})
         res, iid = tool.addInDb()
         if res:
             res, msg = executeCommand(APIClient.getInstance().getCurrentPentest(), str(iid), "auto-detect")
@@ -178,3 +191,100 @@ List of available commands :"""
         """Returns a list of valid options for the given cmd
         """ 
         return []
+
+    @command
+    def query(self, search_query):
+        """Usage: query <terms[ terms...]|tag_name>
+
+        Description : Print a list of object title matching the query
+
+        Arguments:
+            search_query: A python like condition with:
+                            - condition operators (==, !=, >, < , <=, >=, not in, in, regex) 
+                            - boolean logic (and, or, not)
+            Search examples in match (python condition):
+            type == "port"
+            type == "port" and port == 443
+            type == "port" and port regex "443$"
+            type == "port" and (port == 80 or port == 443)
+            type == "port" and port != 443
+            type == "port" and port != 443 and port != 80
+            type == "defect"
+            type == "defect" and "Foo" in title
+            type == "ip" and ip regex "[A-Za-z]"
+            type == "ip" and ip regex "^1\.2"
+            type == "tool" and "done" in status
+            type == "tool" and "done" not in status
+            type == "tool" and "ready" in status
+            type == "ip" and infos.key == "ABC" 
+        """
+        from core.Views.CommandView import CommandView
+        from core.Views.WaveView import WaveView
+        from core.Views.ScopeView import ScopeView
+        from core.Views.IpView import IpView
+        from core.Views.PortView import PortView
+        from core.Views.DefectView import DefectView
+        from core.Views.ToolView import ToolView
+        apiclient = APIClient.getInstance()
+        if apiclient.getCurrentPentest() is None:
+            print_error("Use open to connect to a pentest first")
+            return
+        settings = Settings()
+        settings.reloadSettings()
+        avail_tags = settings.getTags()
+        if search_query in avail_tags:
+            search_query = f"\"{search_query}\" == tags"
+        results = apiclient.search(search_query)
+        if results is not None:
+            for types, documents in results.items():
+                if types == "ports":
+                    cls = PortView
+                elif types == "defects":
+                    cls = DefectView
+                elif types == "commands":
+                    cls = CommandView
+                elif types == "waves":
+                    cls = WaveView
+                elif types == "scopes":
+                    cls = ScopeView
+                elif types == "ips":
+                    cls = IpView
+                elif types == "tools":
+                    cls = ToolView
+                else:
+                    print_error("The given type is invalid : "+str(types))
+                cls.print_info(documents)
+
+    @command
+    def upload(self, path, plugin_name):
+        """Usage: upload <path/to/tool_file/or/directory> <plugin_name>
+
+        Description: Upload the given file or all files in directory to be integrated on the server side using plugin-name
+        """
+        apiclient = APIClient.getInstance()
+        if apiclient.getCurrentPentest() is None:
+            print_error("Use open to connect to a pentest first")
+            return
+        files = []
+        if os.path.isdir(path):
+            # r=root, d=directories, f = files
+            for r, _d, f in os.walk(path):
+                for fil in f:
+                    files.append(os.path.join(r, fil))
+        else:
+            files.append(path)
+        # LOOP ON FOLDER FILES
+        results = {}
+        with ProgressBar() as pb:
+            for f_i, file_path in pb(enumerate(files)):
+                results = apiclient.importExistingResultFile(file_path, plugin_name)
+        presResults = ""
+        filesIgnored = 0
+        for key, value in results.items():
+            presResults += str(value) + " " + str(key)+".\n"
+            if key == "Ignored":
+                filesIgnored += 1
+        if filesIgnored > 0:
+            print_formatted(presResults, "warning")
+        else:
+            print_formatted(presResults, "valid")

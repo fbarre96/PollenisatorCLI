@@ -25,6 +25,9 @@ class IMCompleter(Completer):
                 word_before_cursor = cmd_args[-1]
                 # get option for the command with this name
                 options = self.cls.getOptionsForCmd(cmd_args[0], cmd_args[1:], complete_event)
+                if options:
+                    if isinstance(options[0], str):
+                        options.sort()
                 for option in options:
                     if isinstance(option, str):
                         if option.startswith(word_before_cursor) and option != word_before_cursor:
@@ -41,7 +44,7 @@ class ParamCompleter(Completer):
             return
         word_before_cursor = document.get_word_before_cursor()
         cmd_args = document.text.split(" ")
-        possibleValues = self.completor_func(cmd_args)
+        possibleValues = sorted(self.completor_func(cmd_args))
         for possibleValue in possibleValues:
             if possibleValue.startswith(word_before_cursor) and possibleValue != word_before_cursor:
                 yield Completion(possibleValue, -len(word_before_cursor), possibleValue.split(",")[-1])
