@@ -94,7 +94,7 @@ class APIClient():
             return None
 
     def reinitConnection(self):
-        self.setCurrentPentest("")
+        self.setCurrentPentest(None)
 
     def attach(self, observer):
         """
