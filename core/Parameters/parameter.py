@@ -52,6 +52,8 @@ class Parameter:
     def getPossibleValues(self, args):
         if self.completor is None:
             return []
+        if args is None:
+            args = []
         return self.completor(args)
 
     @classmethod
