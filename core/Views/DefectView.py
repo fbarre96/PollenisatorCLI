@@ -5,7 +5,7 @@ from core.Models.Defect import Defect
 from core.Controllers.DefectController import DefectController
 from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from core.settings import Settings
-from utils.utils import command, cls_commands
+from utils.utils import command, cls_commands, print_formatted
 
 
 @cls_commands
@@ -66,7 +66,7 @@ class DefectView(ViewElement):
                 if isinstance(defect, DefectController):
                     defect = defect.model
                 title_str = ViewElement.colorWithTags(defect.getTags(), defect.getDetailedString())
-                risks_colors = {"Critique":"autoblack", "Majeur":"autored", "Important":"automagenta", "Mineur":"autoyellow", "":"autowhite"}
+                risks_colors = {"Critique":"autoblack", "Majeur":"autored", "Important":"yellow", "Mineur":"autoblue", "":"autowhite"}
                 risk_str = Color("{"+risks_colors[defect.risk]+"}"+defect.risk+"{/"+risks_colors[defect.risk]+"}")
                 table_data.append([title_str, risk_str])
                 table = AsciiTable(table_data)
@@ -75,7 +75,7 @@ class DefectView(ViewElement):
                 table.inner_heading_row_border = True
                 table.inner_row_border = False
                 table.outer_border = False
-            print(table.table)
+            print_formatted(table.table)
         else:
             #No case
             pass

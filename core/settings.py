@@ -38,7 +38,7 @@ class Settings:
         """
         Returns tags defined in settings.
         Returns:
-            If none are defined returns {"todo":"yellow", "unscanned":"magenta", "P0wned!":"red", "Interesting":"dark green", "Uninteresting":"sky blue", "Neutral":"white"}
+            If none are defined returns {"todo":"yellow", "unscanned":"magenta", "P0wned!":"red", "Interesting":"green", "Uninteresting":"blue", "Neutral":"white"}
             otherwise returns a dict with defined key values
         """
         apiclient = APIClient.getInstance()
@@ -47,11 +47,14 @@ class Settings:
         tags = apiclient.findInDb(
             "pollenisator", "settings", {"key": "tags"}, False)
         if tags is not None:
-            tags = json.loads(tags["value"])
+            try:
+                tags = json.loads(tags["value"])
+            except:
+                tags = tags["value"]
             if isinstance(tags, dict):
                 cls.tags_cache = tags
         if cls.tags_cache is None:
-            cls.tags_cache = {"todo":"yellow", "unscanned":"magenta", "P0wned!":"red", "Interesting":"dark green", "Uninteresting":"sky blue", "Neutral":"white"}
+            cls.tags_cache = {"todo":"yellow", "unscanned":"magenta", "P0wned!":"red", "Interesting":"green", "Uninteresting":"blue", "Neutral":"white"}
         return cls.tags_cache
 
     @classmethod

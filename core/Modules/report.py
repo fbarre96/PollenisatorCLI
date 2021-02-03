@@ -19,7 +19,7 @@ from prompt_toolkit.shortcuts import ProgressBar
 @cls_commands
 class Report(FormModule):
     def __init__(self, parent_context, prompt_session):
-        self.risk_colors = {"Mineur":"autoblue", "Important":"autoyellow", "Majeur":"autored", "Critique":"autoblack"}
+        self.risk_colors = {"Mineur":"autoblue", "Important":"yellow", "Majeur":"autored", "Critique":"autoblack"}
         super().__init__('Report', parent_context, "Reporting module.", FormattedText([('class:title', "Report"),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
         settings = Settings()
         settings.reloadSettings()
@@ -73,7 +73,7 @@ class Report(FormModule):
             risk_str = Color("{"+self.risk_colors[defect_o.risk]+"}"+defect_o.risk+"{/"+self.risk_colors[defect_o.risk]+"}")
             table_data.append([i+1, defect_o.title, defect_o.ease, defect_o.impact, risk_str, types, defect_o.redactor])
         table = AsciiTable(table_data,' Report ')
-        print(table.table)
+        print_formatted_text(table.table)
 
     def getDefectWithId(self, defect_id):
         try:

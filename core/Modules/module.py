@@ -253,6 +253,7 @@ List of available commands :"""
                     cls = ToolView
                 else:
                     print_error("The given type is invalid : "+str(types))
+                    return
                 cls.print_info(documents)
 
     @command
