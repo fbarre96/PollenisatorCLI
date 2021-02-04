@@ -18,6 +18,7 @@ from prompt_toolkit import prompt
 import os
 from shutil import which
 import webbrowser
+from prompt_toolkit import ANSI
 
 
 @cls_commands
@@ -227,7 +228,7 @@ class ToolView(ViewElement):
                 table.inner_heading_row_border = True
                 table.inner_row_border = False
                 table.outer_border = False
-            print(table.table)
+            print_formatted_text(ANSI(table.table))
         else:
             #No case
             print("No information to display")

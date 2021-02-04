@@ -14,6 +14,7 @@ from core.Views.IntervalView import IntervalView
 from utils.utils import command, cls_commands, print_formatted_text
 from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
 import re
+from prompt_toolkit import ANSI
 
 @cls_commands
 class WaveView(ViewElement):
@@ -83,7 +84,7 @@ class WaveView(ViewElement):
                 search_pipeline["lvl"] = "wave"
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(search_pipeline)
             for obt in objects:
-                print_formatted_text(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString()))
+                print_formatted_text(ANSI(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString())))
             return True
         return False
 

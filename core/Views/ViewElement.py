@@ -6,7 +6,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from utils.utils import command, cls_commands, print_error, print_formatted_text, print_formatted
 from core.Parameters.parameter import Parameter, TableParameter
 from core.apiclient import APIClient
-
+from prompt_toolkit import ANSI
 
 @cls_commands
 class ViewElement(FormModule):
@@ -118,7 +118,7 @@ class ViewElement(FormModule):
         if object_type in self.__class__.children_object_types:
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(self.controller.model.getDbKey())
             for obt in objects:
-                print_formatted_text(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString()))
+                print_formatted_text(ANSI(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString())))
             return True
         return False
 

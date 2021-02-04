@@ -2,7 +2,7 @@ from utils.utils import command, cls_commands, print_error, print_formatted, pri
 from utils.completer import IMCompleter
 from core.apiclient import APIClient
 from prompt_toolkit.formatted_text import FormattedText
-from terminaltables import AsciiTable
+from terminaltables import SingleTable
 from core.settings import Settings
 from core.FormModules.formModule import FormModule
 from core.Models.Defect import Defect
@@ -13,6 +13,7 @@ from colorclass import Color
 from prompt_toolkit.shortcuts import confirm
 from bson import ObjectId
 import os
+from prompt_toolkit import ANSI
 from shutil import which
 from prompt_toolkit.shortcuts import ProgressBar
 
@@ -70,10 +71,10 @@ class Report(FormModule):
         for i, defect_o in enumerate(self.defects_ordered):
             types = defect_o.mtype
             types = ", ".join(defect_o.mtype)
-            risk_str = Color("{"+self.risk_colors[defect_o.risk]+"}"+defect_o.risk+"{/"+self.risk_colors[defect_o.risk]+"}")
+            risk_str = str(Color("{"+self.risk_colors[defect_o.risk]+"}"+defect_o.risk+"{/"+self.risk_colors[defect_o.risk]+"}"))
             table_data.append([i+1, defect_o.title, defect_o.ease, defect_o.impact, risk_str, types, defect_o.redactor])
-        table = AsciiTable(table_data,' Report ')
-        print_formatted_text(table.table)
+        table = SingleTable(table_data,' Report ')
+        print_formatted_text(ANSI(table.table))
 
     def getDefectWithId(self, defect_id):
         try:

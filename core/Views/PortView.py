@@ -10,8 +10,9 @@ from core.Controllers.DefectController import DefectController
 from core.Controllers.PortController import PortController
 from terminaltables import AsciiTable
 from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
-from utils.utils import command, cls_commands
+from utils.utils import command, cls_commands, print_formatted_text
 import webbrowser
+from prompt_toolkit import ANSI
 
 def validatePort(value):
     return value >= 0 and value <= 65535
@@ -85,7 +86,7 @@ class PortView(ViewElement):
                 table.inner_heading_row_border = True
                 table.inner_row_border = False
                 table.outer_border = False
-            print(table.table)
+            print_formatted_text(ANSI(table.table))
         else:
             #No case
             pass

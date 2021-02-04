@@ -5,8 +5,8 @@ from core.Models.Defect import Defect
 from core.Controllers.DefectController import DefectController
 from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from core.settings import Settings
-from utils.utils import command, cls_commands, print_formatted
-
+from utils.utils import command, cls_commands, print_formatted, print_formatted_text
+from prompt_toolkit import ANSI
 
 @cls_commands
 class DefectView(ViewElement):
@@ -75,7 +75,7 @@ class DefectView(ViewElement):
                 table.inner_heading_row_border = True
                 table.inner_row_border = False
                 table.outer_border = False
-            print_formatted(table.table)
+            print_formatted_text(ANSI(table.table))
         else:
             #No case
             pass
