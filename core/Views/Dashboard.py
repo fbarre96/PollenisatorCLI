@@ -9,9 +9,9 @@ class Dashboard:
         results = apiclient.aggregate("ports", [{"$group":{"_id":{"ip": "$ip"}, "count":{"$sum":1}}}, {"$sort": {"count":-1}}])
         if results is not None:
             table_data = [['Hostname', 'Ports']]
+            table = AsciiTable(table_data)
             for result in results:
                 table_data.append([result["_id"]["ip"], result["count"] ])
-                table = AsciiTable(table_data)
                 table.inner_column_border = False
                 table.inner_footing_row_border = False
                 table.inner_heading_row_border = True
