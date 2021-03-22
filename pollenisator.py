@@ -48,6 +48,26 @@ from colorclass import Windows
 @cls_commands
 class Pollenisator(Module):
     def __init__(self):
+        args = docopt(__doc__, version=version)
+        client_config = loadCfg(getClientConfigFilePath())
+        if args["host"]:
+            client_config["host"] = args["host"]
+        if args["port"]:
+            client_config["port"] = args["ports"]
+        saveCfg(client_config, getClientConfigFilePath())
+        apiclient = APIClient.getInstance()
+        if not apiclient.tryConnection():
+            print_error("Could not connect to server. Use --host and --port option.")
+            return
+        rightLogin = False
+        print_formatted("Connecting to http://"+str(client_config["host"]+":"+str(client_config["port"])))
+        while not rightLogin:
+            login = prompt("Username :", is_password=False)
+            pwd = prompt("Password :", is_password=True)
+            rightLogin = apiclient.login(login, pwd)
+            if not rightLogin:
+                print_error("Invalid username or password")
+
         self.prompt_session = PromptSession(
             "Pollenisator #",
             auto_suggest=AutoSuggestFromHistory(),
@@ -67,17 +87,7 @@ class Pollenisator(Module):
             "global_settings": PollenisatorSettings(self, self.prompt_session),
         }
 
-        args = docopt(__doc__, version=version)
-        client_config = loadCfg(getClientConfigFilePath())
-        if args["host"]:
-            client_config["host"] = args["host"]
-        if args["port"]:
-            client_config["port"] = args["ports"]
-        saveCfg(client_config, getClientConfigFilePath())
-        apiclient = APIClient.getInstance()
-        if not apiclient.tryConnection():
-            print_error("Could not connect to server. Use --host and --port option.")
-            return
+        
         # Start in main module (this one)
         self.set_context(self)
         
@@ -108,7 +118,7 @@ class Pollenisator(Module):
         while True:
             with patch_stdout():
                 try:
-                    result = self.prompt_session.prompt(style=style)
+                    result = self.prompt_session.prompt(style=style, is_password=False)
                     if (self.current_context == self and result.strip().lower() == "exit"):
                         break
                     self.parse_result(result)

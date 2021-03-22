@@ -3,3 +3,5 @@ prompt_toolkit
 terminaltables
 colorclass
 lark-parser
+python-jose
+requests

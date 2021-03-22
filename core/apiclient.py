@@ -7,6 +7,7 @@ import sys
 from bson import ObjectId
 from utils.utils import JSONEncoder, JSONDecoder, loadCfg, getClientConfigFilePath, print_error
 from shutil import copyfile
+from jose import jwt, JWTError
 
 #proxies = {"http":"127.0.0.1:8080", "https":"127.0.0.1:8080"}
 proxies = {}
@@ -53,10 +54,6 @@ class APIClient():
         response = requests.get(self.api_url_base, headers=self.headers)
         return response.status_code == 200
     
-    def setCurrentPentest(self, newCurrentPentest):
-        self.currentPentest = newCurrentPentest
-        
-
     def getCurrentPentest(self):
         return self.currentPentest
 
@@ -131,7 +128,10 @@ class APIClient():
         response = requests.get(api_url, headers=self.headers)
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        elif response.status_code == 401:
+            print_error("You have to be connected first")
         else:
+            print_error(str(json.loads(response.content.decode('utf-8'), cls=JSONDecoder)))
             return None
     
     def doDeletePentest(self, pentest):
@@ -337,7 +337,9 @@ class APIClient():
     def putProof(self, defect_iid, local_path):
         api_url = '{0}files/{1}/upload/proof/{2}'.format(self.api_url_base, self.getCurrentPentest(), defect_iid)
         with open(local_path,'rb') as f:
-            response = requests.post(api_url, files={"upfile": (os.path.basename(local_path) ,f)}, proxies=proxies, verify=False)
+            h = self.headers
+            del h["Content-Type"]
+            response = requests.post(api_url, files={"upfile": (os.path.basename(local_path) ,f)}, headers=h, proxies=proxies, verify=False)
             if response.status_code == 200:
                 return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         return None
@@ -395,7 +397,9 @@ class APIClient():
         if not os.path.isfile(local_path):
             return "Failure to open provided file"
         with io.open(local_path, 'r', encoding='utf-8', errors="ignore") as f:
-            response = requests.post(api_url, files={"upfile": (os.path.basename(local_path) ,f)}, data={"plugin":parser}, proxies=proxies, verify=False)
+            h = self.headers
+            del h["Content-Type"]
+            response = requests.post(api_url, files={"upfile": (os.path.basename(local_path) ,f)}, headers=h, data={"plugin":parser}, proxies=proxies, verify=False)
             if response.status_code == 200:
                 return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
             return response.content.decode('utf-8')
@@ -409,7 +413,9 @@ class APIClient():
     def importExistingResultFile(self, filepath, plugin):
         api_url = '{0}files/{1}/import'.format(self.api_url_base, self.getCurrentPentest())
         with io.open(filepath, 'r', encoding='utf-8', errors="ignore") as f:
-            response = requests.post(api_url, files={"upfile": (os.path.basename(filepath) ,f)}, data={"plugin":plugin}, proxies=proxies, verify=False)
+            h = self.headers
+            del h["Content-Type"]
+            response = requests.post(api_url, files={"upfile": (os.path.basename(filepath) ,f)}, headers=h, data={"plugin":plugin}, proxies=proxies, verify=False)
             if response.status_code == 200:
                 return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
@@ -466,14 +472,18 @@ class APIClient():
     def importDb(self, filename):
         api_url = '{0}importDb'.format(self.api_url_base)
         with io.open(filename, 'r', encoding='utf-8', errors="ignore") as f:
-            response = requests.post(api_url, files={"upfile": (os.path.basename(filename) ,f)}, proxies=proxies, verify=False)
+            h = self.headers
+            del h["Content-Type"]
+            response = requests.post(api_url, files={"upfile": (os.path.basename(filename) ,f)}, headers=h, proxies=proxies, verify=False)
             return response.status_code == 200
         return False
     
     def importCommands(self, filename):
         api_url = '{0}importCommands'.format(self.api_url_base)
         with io.open(filename, 'r', encoding='utf-8', errors="ignore") as f:
-            response = requests.post(api_url, files={"upfile": (os.path.basename(filename) ,f)}, proxies=proxies, verify=False)
+            h = self.headers
+            del h["Content-Type"]
+            response = requests.post(api_url, files={"upfile": (os.path.basename(filename) ,f)}, headers=h, proxies=proxies, verify=False)
             return response.status_code == 200
         return False
 
@@ -538,3 +548,50 @@ class APIClient():
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         return response.content.decode("utf-8")
+
+    def isConnected(self):
+        return self.headers.get("Authorization", "") != ""
+    
+    def isAdmin(self):
+        return "admin" in self.scope
+
+    def getUser(self):
+        return self.userConnected
+    
+    def disconnect(self):
+        self.scope = []
+        self.userConnected = None
+        try:
+            del self.headers["Authorization"]
+        except KeyError:
+            pass
+
+    def login(self, username, passwd):
+        api_url = '{0}login'.format(self.api_url_base)
+        data = {"username":username, "pwd":passwd}
+        response = requests.post(api_url, headers=self.headers, data=json.dumps(data, cls=JSONEncoder), proxies=proxies, verify=False)
+        if response.status_code == 200:
+            token = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+            self.headers["Authorization"] = "Bearer "+token
+            try:
+                jwt_decoded = jwt.decode(token, "", options={"verify_signature":False})
+                self.scope = jwt_decoded["scope"]
+                self.userConnected = username
+            except JWTError as e:
+                return False
+        return response.status_code == 200
+    
+    def setCurrentPentest(self, newCurrentPentest):
+        api_url = '{0}login/{1}'.format(self.api_url_base, newCurrentPentest)
+        response = requests.post(api_url, headers=self.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            token = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+            self.headers["Authorization"] = "Bearer "+token
+            try:
+                jwt_decoded = jwt.decode(token, "", options={"verify_signature":False})
+                self.scope = jwt_decoded["scope"]
+            except JWTError as e:
+                return False
+            self.currentPentest = newCurrentPentest
+            return True
+        return False

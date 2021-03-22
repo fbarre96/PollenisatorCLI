@@ -12,7 +12,6 @@ class PollenisatorSettings(FormModule):
     def __init__(self, parent_context, prompt_session):
         super().__init__('Pollenisator settings', parent_context, "Pollenisator global settings.", FormattedText(
             [('class:title', f"{parent_context.name}"), ("class:subtitle", f" global settings"), ("class:angled_bracket", " > ")]), IMCompleter(self), prompt_session)
-        self.reload()
 
     def reload(self):
         settings = Settings()
