@@ -4,7 +4,7 @@
 """
 Pollenisator
 Usage: 
-    pollenisator.py [--host host] [--port port] 
+    pollenisator.py [-h] [-v] [--host <host>] [--port <port>]
 
 Options: 
     -h, --help                           Show this help menu.
@@ -50,12 +50,13 @@ class Pollenisator(Module):
     def __init__(self):
         args = docopt(__doc__, version=version)
         client_config = loadCfg(getClientConfigFilePath())
-        if args["host"]:
-            client_config["host"] = args["host"]
-        if args["port"]:
-            client_config["port"] = args["ports"]
+        if args["--host"]:
+            client_config["host"] = args["<host>"]
+        if args["--port"]:
+            client_config["port"] = args["<port>"]
         saveCfg(client_config, getClientConfigFilePath())
         apiclient = APIClient.getInstance()
+        self.connected = False
         if not apiclient.tryConnection():
             print_error("Could not connect to server. Use --host and --port option.")
             return
@@ -77,6 +78,7 @@ class Pollenisator(Module):
             style=style
         )
         self.prompt_session.path_completer = PathCompleter()
+        self.connected = True
 
         super().__init__("Pollenisator", None, "Main Menu", FormattedText([('class:title', "Pollenisator"),('class:angled_bracket', " > ")]), IMCompleter(self), self.prompt_session)
 
@@ -314,6 +316,7 @@ if __name__ == '__main__':
 """)
     Windows.enable(auto_colors=True, reset_atexit=True)  # Does nothing if not on Windows.
     pollenisator = Pollenisator()
-    pollenisator.main_loop()
+    if pollenisator.connected:
+        pollenisator.main_loop()
     
     

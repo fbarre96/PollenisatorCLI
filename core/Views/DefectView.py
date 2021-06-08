@@ -5,8 +5,10 @@ from core.Models.Defect import Defect
 from core.Controllers.DefectController import DefectController
 from core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from core.settings import Settings
-from utils.utils import command, cls_commands, print_formatted, print_formatted_text
+from core.apiclient import APIClient
+from utils.utils import command, cls_commands, print_error, print_formatted_text
 from prompt_toolkit import ANSI
+
 
 @cls_commands
 class DefectView(ViewElement):
@@ -24,7 +26,7 @@ class DefectView(ViewElement):
             HiddenParameter("port", default=self.controller.model.port),
             HiddenParameter("ip", default=self.controller.model.ip),
             HiddenParameter("proto", default=self.controller.model.proto),
-            Parameter("title", required = True,  default=self.controller.model.title, helper="Defect title"),
+            Parameter("title", required = True,  completor=self.getDefectsTitle, default=self.controller.model.title, helper="Defect title"),
             ComboParameter("ease",  DefectController.getEases(), default=self.controller.model.ease, required=True, helper="ease of exploitation: \n0: Trivial to exploit, no tool required\n1: Simple technics and public tools needed to exploit\n2: public vulnerability exploit requiring security skills and/or the development of simple tools.\n3: Use of non-public exploits requiring strong skills in security and/or the development of targeted tools"),
             ComboParameter("impact",  DefectController.getImpacts(), default=self.controller.model.impact, required=True, helper="0: No direct impact on system security\n1: Impact isolated on precise locations of pentested system security\n2: Impact restricted to a part of the system security.\n3: Global impact on the pentested system security."),
             ComboParameter("risk",  DefectController.getRisks(), default=self.controller.model.risk, required=False, helper="0: small risk that might be fixed\n1: moderate risk that need a planed fix\n2: major risk that need to be fixed quickly.\n3: critical risk that need an immediate fix or an immediate interruption."),
@@ -35,6 +37,21 @@ class DefectView(ViewElement):
         ]
         if self.controller.model.isAssigned():
             self.fields.append(ComboParameter("redactor",  settings.getPentesters()+["N/A"], default=self.controller.model.risk.redactor, required=False, helper="Assign a pentester to redact this defect."))
+
+    def getDefectsTitle(self, args):
+        if not args:
+            return []
+        value = " ".join(args)
+        if value.strip() == "" :
+            return []
+        res, msg = APIClient.searchDefect(value)
+        ret = []
+        if res is None:
+            print_error(msg)
+            return ret
+        for r in res:
+            ret.append(r["title"])
+        return ret
 
     @command
     def set(self, parameter_name, value, *args):
@@ -47,14 +64,23 @@ class DefectView(ViewElement):
             value           the value to give to the parameter
         """ 
         if args:
-            value += " ".join(args) 
+            value += " "+(" ".join(args)) 
         super().set(parameter_name, value)
         if parameter_name == "ease" or parameter_name == "impact":
             ease = self.getFieldByName("ease").getStrValue()
             impact = self.getFieldByName("impact").getStrValue()
             risk = Defect.getRisk(ease, impact)
             self.set("risk", risk)
-
+        elif parameter_name == "title":
+            res, msg = APIClient.searchDefect(value)
+            if res is None:
+                print_error(msg)
+                return
+            if len(res) == 1:
+                res = res[0]
+                self.set("ease", res["ease"])
+                self.set("impact", res["impact"])
+                self.set("types", res["type"])
     
     @classmethod
     def print_info(cls, defects):
@@ -66,7 +92,7 @@ class DefectView(ViewElement):
                 if isinstance(defect, DefectController):
                     defect = defect.model
                 title_str = ViewElement.colorWithTags(defect.getTags(), defect.getDetailedString())
-                risks_colors = {"Critique":"autoblack", "Majeur":"autored", "Important":"yellow", "Mineur":"autoblue", "":"autowhite"}
+                risks_colors = {"Critique":"autoblack", "Majeur":"autored", "Important":"automagenta", "Mineur":"autoyellow", "":"autowhite"}
                 risk_str = Color("{"+risks_colors[defect.risk]+"}"+defect.risk+"{/"+risks_colors[defect.risk]+"}")
                 table_data.append([title_str, risk_str])
                 table = AsciiTable(table_data)

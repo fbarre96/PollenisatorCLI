@@ -34,6 +34,31 @@ class APIClient():
             APIClient()
         return APIClient.__instances[pid]
 
+    @staticmethod
+    def searchDefect(searchTerms):
+        apiclient = APIClient.getInstance()
+        api_url = '{0}report/search'.format(apiclient.api_url_base)
+        response = requests.get(api_url, params={"type":"defect", "q":searchTerms}, headers=apiclient.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder), ""
+        elif response.status_code == 204:
+            return None, "There is no external knowledge database to query. Check documentation if you have one ready."
+        else:
+            return None, "Unexpected server response "+str(response.status_code)+"\n"+response.text    
+
+    @staticmethod
+    def searchRemark(searchTerms):
+        apiclient = APIClient.getInstance()
+        api_url = '{0}report/search'.format(apiclient.api_url_base)
+        response = requests.get(api_url, params={"type":"remark", "q":searchTerms}, headers=apiclient.headers, proxies=proxies, verify=False)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder), ""
+        elif response.status_code == 204:
+            return None, "There is no external knowledge database to query. Check documentation if you have one ready."
+        else:
+            return None, "Unexpected server response "+str(response.status_code)+"\n"+response.text    
+
+
     def __init__(self):
         pid = os.getpid()  # HACK : One mongo per process.
         if APIClient.__instances.get(pid, None) is not None:
@@ -51,7 +76,10 @@ class APIClient():
         self.api_url_base = "http://"+host+":"+str(port)+"/api/v1/"
 
     def tryConnection(self, config=cfg):
-        response = requests.get(self.api_url_base, headers=self.headers)
+        try:
+            response = requests.get(self.api_url_base, headers=self.headers)
+        except Exception:
+            return False
         return response.status_code == 200
     
     def getCurrentPentest(self):
@@ -542,13 +570,8 @@ class APIClient():
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         return []
 
-    def moveDefect(self, defect_id, target_id):
-        api_url = '{0}report/{1}/defects/move/{2}/{3}'.format(self.api_url_base, self.getCurrentPentest(), defect_id, target_id)
-        response = requests.post(api_url, headers=self.headers, proxies=proxies, verify=False)
-        if response.status_code == 200:
-            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
-        return response.content.decode("utf-8")
-
+    
+    
     def isConnected(self):
         return self.headers.get("Authorization", "") != ""
     

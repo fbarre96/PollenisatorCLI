@@ -6,21 +6,25 @@ from terminaltables import AsciiTable
 from core.settings import Settings
 from core.FormModules.formModule import FormModule
 from core.Models.Defect import Defect
+from core.Models.Remark import Remark
 from core.Views.DefectView import DefectView
+from core.Views.RemarkView import RemarkView
 from core.Controllers.DefectController import DefectController
+from core.Controllers.ElementController import ElementController
+
 from core.Parameters.parameter import Parameter, ComboParameter
 from colorclass import Color
 from prompt_toolkit.shortcuts import confirm
 from bson import ObjectId
 import os
-from prompt_toolkit import ANSI
 from shutil import which
 from prompt_toolkit.shortcuts import ProgressBar
+from prompt_toolkit import ANSI
 
 @cls_commands
 class Report(FormModule):
     def __init__(self, parent_context, prompt_session):
-        self.risk_colors = {"Mineur":"autoblue", "Important":"yellow", "Majeur":"autored", "Critique":"autoblack"}
+        self.risk_colors = {"Mineur":"autoblue", "Important":"autoyellow", "Majeur":"autored", "Critique":"autoblack"}
         super().__init__('Report', parent_context, "Reporting module.", FormattedText([('class:title', "Report"),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
         settings = Settings()
         settings.reloadSettings()
@@ -49,6 +53,7 @@ class Report(FormModule):
         ]
         self.mainRedac = "N/A"
         self.defects_ordered = []
+        self.remarks_list = []
         self.show()
     
     @command
@@ -59,21 +64,33 @@ class Report(FormModule):
         super().show()
         self.updateDefectList()
         self.printReport()
+        self.updateRemarkList()
+        self.printRemarks()
 
     def updateDefectList(self):
         self.defects_ordered = []
         for line in Defect.getDefectTable():
             self.defects_ordered.append(Defect(line))
-        
+    
+    def updateRemarkList(self):
+        apiclient = APIClient.getInstance()
+        self.remarks_list = [x for x in apiclient.find("remarks", {})]
 
     def printReport(self):
         table_data = [['ID', 'Title', 'Ease', 'Impact', 'Risk', 'Type', 'Redactor']]
         for i, defect_o in enumerate(self.defects_ordered):
             types = defect_o.mtype
             types = ", ".join(defect_o.mtype)
-            risk_str = str(Color("{"+self.risk_colors[defect_o.risk]+"}"+defect_o.risk+"{/"+self.risk_colors[defect_o.risk]+"}"))
+            risk_str = Color("{"+self.risk_colors[defect_o.risk]+"}"+defect_o.risk+"{/"+self.risk_colors[defect_o.risk]+"}")
             table_data.append([i+1, defect_o.title, defect_o.ease, defect_o.impact, risk_str, types, defect_o.redactor])
         table = AsciiTable(table_data,' Report ')
+        print_formatted_text(ANSI(table.table))
+
+    def printRemarks(self):
+        table_data = [['ID', 'Type', 'Title']]
+        for i, remark in enumerate(self.remarks_list):
+            table_data.append([str(i+1), remark["type"], remark["title"]])
+        table = AsciiTable(table_data,' Remarks ')
         print_formatted_text(ANSI(table.table))
 
     def getDefectWithId(self, defect_id):
@@ -167,7 +184,29 @@ class Report(FormModule):
         """
         view = DefectView(DefectController(Defect({"ip":""})), self, self.prompt_session, is_insert=True)
         self.set_context(view)
+
+    @command
+    def add_remark(self):
+        """Usage : add_remark
+        Description : add a remark in database
+        """
+        view = RemarkView(ElementController(Remark()), self, self.prompt_session, is_insert=True)
+        self.set_context(view)
+        self.updateRemarkList()
     
+    @command
+    def remove_remark(self, remarkID):
+        """Usage : remove_remark <remarkID>s
+        Description : remove a remark in database
+        """
+        try:
+            remark_o = Remark(self.remarks_list[int(remarkID)-1])
+            remark_o.delete()
+        except ValueError:
+            print_error("Second argument should be a number")
+        except IndexError:
+            print_error("Invalid id given")
+
     @command
     def generate(self, report_type):
         """Usage : generate <"word"|"powerpoint">
@@ -239,4 +278,4 @@ class Report(FormModule):
             settings._reloadDbSettings()
             pentesters = settings.getPentesters()
             return pentesters
-        return []
+        return []   
