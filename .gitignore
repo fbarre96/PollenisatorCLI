@@ -128,9 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-results/
-exports/
-!exports/pollenisator_commands.gz
-!exports/pollenisator_group_commands.gz
-
+pollenisatorcli/results/
+pollenisatorcli/exports/
+!pollenisatorcli/exports/pollenisator_commands.gz
+!pollenisatorcli/exports/pollenisator_group_commands.gz
+PollenisatorWorker/
 

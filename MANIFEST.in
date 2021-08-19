@@ -1,0 +1,6 @@
+recursive-include pollenisatorcli/config *.cfg
+recursive-include pollenisatorcli/config/tools.d *.json
+recursive-include pollenisatorcli/config *
+include pollenisatorcli/exports/pollenisator_commands.gz
+include pollenisatorcli/exports/pollenisator_group_commands.gz
+include pollenisatorcli/setupTerminalForPentest.sh
