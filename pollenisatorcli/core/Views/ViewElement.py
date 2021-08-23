@@ -7,6 +7,7 @@ from pollenisatorcli.utils.utils import command, cls_commands, print_error, prin
 from pollenisatorcli.core.Parameters.parameter import Parameter, TableParameter
 from pollenisatorcli.core.apiclient import APIClient
 from prompt_toolkit import ANSI
+name = "Pentest objects" # Used in command decorator
 
 @cls_commands
 class ViewElement(FormModule):
@@ -19,6 +20,8 @@ class ViewElement(FormModule):
         self.prompt_session = prompt_session
         self.updatePrompt()
         self.is_insert = kwargs.get("is_insert", False)
+        self.validateCommand = "submit"
+
 
     def updatePrompt(self):
         super().__init__(self.__class__.name, self.parent_context, f"View/Edit this {self.__class__.name} fields", FormattedText(
@@ -42,7 +45,7 @@ class ViewElement(FormModule):
     
     @command
     def set(self, parameter_name, value, *args):
-        """Usage : set <parameter_name> <value>
+        """Usage: set <parameter_name> <value>
         
         Description : Set the parameter to the given value
 
@@ -82,6 +85,7 @@ class ViewElement(FormModule):
             res = self.controller.doDelete()
             if int(res) == 1:
                 print_formatted(f"Successfully delete this {self.__class__.name}", "valid")
+        self.exit()
     
     @command
     def show(self):
@@ -89,9 +93,10 @@ class ViewElement(FormModule):
 
         Description: print info of this element
         """
-        super().show()
-        print_formatted("\n")
         self.__class__.print_info([self.controller.model])
+        print_formatted("\n")
+        super().show()
+        
 
     def validateTag(self, value):
         tag_list = Settings.getTags().keys()
@@ -117,8 +122,7 @@ class ViewElement(FormModule):
         """
         if object_type in self.__class__.children_object_types:
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(self.controller.model.getDbKey())
-            for obt in objects:
-                print_formatted_text(ANSI(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString())))
+            self.__class__.children_object_types[object_type]["view"].print_info(objects)
             return True
         return False
 
@@ -170,25 +174,10 @@ class ViewElement(FormModule):
             return [x[:-1] for x in (self.__class__.children_object_types.keys())]
         elif cmd == "edit":
             return self.autoCompleteInfo(cmd_args, complete_event)
-        elif cmd == "set":
-            ret = []
-            if len(cmd_args) == 1:
-                params = cmd_args[0].split(".")
-                field = self.getFieldByName(params[0])
-                if isinstance(field, TableParameter):
-                    for key in field.getKeys():
-                        ret.append(cmd_args[0]+"."+key)
-            if ret:
-                return ret
         ret = super().getOptionsForCmd(cmd, cmd_args, complete_event)
         if ret:
             return ret
         return []
-
-    def getFieldByName(self, name):
-        for field in self.fields:
-            if field.name == name:
-                return field
 
     @command
     def insert(self, object_type):
@@ -200,10 +189,11 @@ class ViewElement(FormModule):
         for children_object_type in self.__class__.children_object_types:
             classe = self.__class__.children_object_types[children_object_type]
             if object_type+"s" == children_object_type:
-                view = classe["view"](classe["controller"](classe["model"](self.controller.getDbKey())), self, self.prompt_session, is_insert=True)
+                view = classe["view"](classe["controller"](classe["model"](self.controller.getDbKey())), self, self.prompt_session)
         if view is None:
             print_error(f"{object_type} is not a valid children level object type to insert.")
         else:
+            view.is_insert = True
             self.set_context(view)
 
     def autoCompleteInfo(self, cmd_args, complete_event):

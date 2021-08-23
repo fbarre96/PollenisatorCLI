@@ -10,9 +10,10 @@ from pollenisatorcli.core.Controllers.DefectController import DefectController
 from pollenisatorcli.core.Controllers.PortController import PortController
 from terminaltables import AsciiTable
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
-from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_text
+from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_text, style_table
 import webbrowser
 from prompt_toolkit import ANSI
+name = "Port" # Used in command decorator
 
 def validatePort(value):
     return value >= 0 and value <= 65535
@@ -58,7 +59,7 @@ class PortView(ViewElement):
 
     @classmethod
     def print_info(cls, ports):
-        if len(ports) >= 1:
+        if ports:
             table_data = [['Port', 'Service', "Product", 'Tools : waiting', 'running', 'done', 'Defects']]
             for port in ports:
                 if isinstance(port, dict):
@@ -80,20 +81,16 @@ class PortView(ViewElement):
                 defects = list(port.getDefects())
                 port_str = ViewElement.colorWithTags(port.getTags(), port.getDetailedString())
                 table_data.append([port_str, port.service, port.product, str(not_done), str(running), str(done), len(defects)])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted_text(ANSI(table.table))
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass
 
     @command
     def browser(self):
-        """Usage : browser
+        """Usage: browser
         Description: open the ip:port in a web browser
         """
         port_m = self.controller.model

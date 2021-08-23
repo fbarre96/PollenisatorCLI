@@ -6,8 +6,9 @@ from pollenisatorcli.core.Controllers.DefectController import DefectController
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from pollenisatorcli.core.settings import Settings
 from pollenisatorcli.core.apiclient import APIClient
-from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted_text
+from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted_text, style_table
 from prompt_toolkit import ANSI
+name = "Defect" # Used in command decorator
 
 
 @cls_commands
@@ -55,7 +56,7 @@ class DefectView(ViewElement):
 
     @command
     def set(self, parameter_name, value, *args):
-        """Usage : set <parameter_name> <value>
+        """Usage: set <parameter_name> <value>
         
         Description : Set the parameter to the given value
 
@@ -85,7 +86,7 @@ class DefectView(ViewElement):
 
     @classmethod
     def print_info(cls, defects):
-        if len(defects) >= 1:
+        if defects:
             table_data = [['Title', 'Risk']]
             for defect in defects:
                 if isinstance(defect, dict):
@@ -96,13 +97,9 @@ class DefectView(ViewElement):
                 risks_colors = {"Critical":"autoblack", "Major":"autored", "Important":"automagenta", "Minor":"autoyellow", "":"autowhite"}
                 risk_str = Color("{"+risks_colors[defect.risk]+"}"+defect.risk+"{/"+risks_colors[defect.risk]+"}")
                 table_data.append([title_str, risk_str])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted_text(ANSI(table.table))
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass

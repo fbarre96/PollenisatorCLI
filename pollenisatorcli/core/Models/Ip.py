@@ -187,6 +187,26 @@ class Ip(Element):
         """
         return self.ip
 
+    def getDetailedString(self):
+        """
+        Get a more detailed string representation of a tool.
+
+        Returns:
+            string
+        """
+        apiclient = APIClient.getInstance()
+        port_count = apiclient.count("ports", {"ip":self.ip})
+        hostnames = self.infos.get("hostname", [])
+        hostname_str = ""
+        if hostnames:
+            hostname_str = "hostnames : "+(", ".join(hostnames))
+        ip_str = ", ".join(list(self.infos.get("ip", "")))
+        if ip_str:
+            ip_str = "IP : "+str(ip_str)
+        else:
+            ip_str = hostname_str
+        return f"{self.ip} ({port_count} ports) {ip_str}"
+
     def getTools(self):
         """Return ip assigned tools as a list of mongo fetched defects dict
         Returns:
@@ -202,6 +222,22 @@ class Ip(Element):
         """
         apiclient = APIClient.getInstance()
         return apiclient.find("ports", {"ip": self.ip})
+    
+    def getPortCount(self):
+        """Returns ip assigned ports count
+        Returns:
+            Integer : number of port open on ip
+        """
+        apiclient = APIClient.getInstance()
+        return apiclient.count("ports", {"ip": self.ip})
+
+    def getDefectCount(self):
+        """Returns ip assigned defect count
+        Returns:
+            Integer : number of defects
+        """
+        apiclient = APIClient.getInstance()
+        return apiclient.count("defects", {"ip": self.ip})
 
     def getDefects(self):
         """Returns ip assigned tools as a list of mongo fetched defects dict

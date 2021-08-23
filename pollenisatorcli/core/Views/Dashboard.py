@@ -1,6 +1,9 @@
 from pollenisatorcli.core.apiclient import APIClient
 from terminaltables import AsciiTable
-from pollenisatorcli.utils.utils import print_formatted
+from pollenisatorcli.utils.utils import print_formatted, style_table, print_formatted_text
+from prompt_toolkit import ANSI
+
+name = "Dashboard" # Used in command decorator
 
 class Dashboard:
     @classmethod
@@ -12,12 +15,8 @@ class Dashboard:
             table = AsciiTable(table_data)
             for result in results:
                 table_data.append([result["_id"]["ip"], result["count"] ])
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted(table.table)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             print_formatted("No information to display")
@@ -31,13 +30,9 @@ class Dashboard:
             table_data = [['Port', 'Count']]
             for result in results:
                 table_data.append([result["_id"]["port"], result["count"] ])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted(table.table)
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             print_formatted("No information to display")
@@ -65,13 +60,9 @@ class Dashboard:
                 total = tool_counts["total"]
                 ready_count = total - tool_counts.get("done",0) - tool_counts.get("running", 0) - tool_counts.get("error", 0)
                 table_data.append([tool_name, ready_count, result.get("running", 0), result.get("done", 0), result.get("error", 0), total])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted(table.table)
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             print_formatted("No information to display")

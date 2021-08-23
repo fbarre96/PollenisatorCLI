@@ -10,6 +10,7 @@ from pollenisatorcli.core.Controllers.ScopeController import ScopeController
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from pollenisatorcli.utils.utils import isNetworkIp, isIp, isDomain
 from pollenisatorcli.utils.utils import command, cls_commands
+name = "Scope" # Used in command decorator
 
 def validateScope(value):
         true_value = value.strip()
@@ -53,7 +54,7 @@ class ScopeView(ViewElement):
 
     @classmethod
     def print_info(cls, scopes):
-        if len(scopes) >= 1:
+        if scopes:
             table_data = [['Scope', 'In wave', 'Tools : ', 'waiting', 'running', 'done']]
             for scope in scopes:
                 if isinstance(scope, dict):

@@ -1,6 +1,6 @@
 from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted, print_formatted_text
 from pollenisatorcli.utils.completer import IMCompleter
-from pollenisatorcli.core.Modules.module import Module
+from pollenisatorcli.core.Modules.GlobalModule import GlobalModule
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.core.Models.Command import Command
 from pollenisatorcli.core.Models.CommandGroup import CommandGroup
@@ -10,9 +10,10 @@ from pollenisatorcli.core.Views.CommandView import CommandView
 from pollenisatorcli.core.Views.CommandGroupView import CommandGroupView
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import prompt
+name = "Command templates" # Used in command decorator
 
 @cls_commands
-class CommandTemplate(Module):
+class CommandTemplate(GlobalModule):
     def __init__(self, parent_context, prompt_session):
         super().__init__('command_template', parent_context, "Edit command templates.", FormattedText([('class:title', "Command templates"),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
     
@@ -25,12 +26,11 @@ class CommandTemplate(Module):
         """
         if object_type == "commands":
             commands = Command.fetchObjects({})
-            CommandView.print_info([command for command in commands])
+            CommandView.print_info(commands)
             return True
         elif object_type == "group_commands":
             groupcommands = CommandGroup.fetchObjects({})
-            for groupcommand in groupcommands:
-                print_formatted_text(groupcommand.getDetailedString())
+            CommandGroupView.print_info(groupcommands)
             return True
         return False
 
@@ -50,7 +50,7 @@ class CommandTemplate(Module):
         """  
         apiclient = APIClient.getInstance()
         if cmd == "help":
-            return [""]+self._cmd_list
+            return [""]+self.__class__._cmd_list
         elif cmd in ["ls", "insert"]:
             return ["commands", "group_commands"]
         elif cmd == "info":

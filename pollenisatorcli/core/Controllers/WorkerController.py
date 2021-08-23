@@ -1,6 +1,6 @@
 from pollenisatorcli.core.Controllers.ElementController import ElementController
 
 class WorkerController(ElementController):
-    pass
-
+    def set_inclusion(self):
+        return self.model.set_inclusion()
 

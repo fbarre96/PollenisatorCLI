@@ -1,13 +1,14 @@
-from pollenisatorcli.core.Modules.module import Module
 from prompt_toolkit.formatted_text import FormattedText
 from pollenisatorcli.utils.completer import IMCompleter
 from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted, print_formatted_text
 from pollenisatorcli.core.Views.ToolView import ToolView
 from pollenisatorcli.core.Controllers.ToolController import ToolController
 from pollenisatorcli.core.Models.Tool import Tool
+from pollenisatorcli.core.Modules.GlobalModule import GlobalModule
+name = "Tool" # Used in command decorator
 
 @cls_commands
-class ToolModule(Module):
+class ToolModule(GlobalModule):
     def __init__(self, name, parent_context, prompt_session, tools):
         super().__init__(name, parent_context, "Interact and edit "+name, FormattedText([('class:title', name),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
         self.tools = tools
@@ -26,7 +27,7 @@ class ToolModule(Module):
 
     @command
     def ls(self):
-        """Usage : ls
+        """Usage: ls
 
         Description: list the tools attached to the object
         """
@@ -35,7 +36,7 @@ class ToolModule(Module):
 
     @command
     def launch(self, toolname, local=None):
-        """Usage : launch <tool name|"all">["local"]
+        """Usage: launch <tool name|"all">["local"]
 
         Args:
             name: the toolname to launch or "All" to launch every tool at once 
@@ -49,7 +50,7 @@ class ToolModule(Module):
 
     @command
     def reset(self, toolname):
-        """Usage : reset <tool name|"all">
+        """Usage: reset <tool name|"all">
         
         Args:
             name: the toolname to launch or "All" to launch every tool at once 
@@ -62,7 +63,7 @@ class ToolModule(Module):
 
     @command
     def stop(self, toolname):
-        """Usage : stop <tool name|"all">
+        """Usage: stop <tool name|"all">
 
         Args:
             name: the toolname to launch or "All" to launch every tool at once 
@@ -75,7 +76,7 @@ class ToolModule(Module):
 
     @command
     def view(self, toolname):
-        """Usage : view  <tool name|"all">
+        """Usage: view  <tool name|"all">
 
         Args:
             name: the toolname to launch or "All" to launch every tool at once 

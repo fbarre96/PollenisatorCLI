@@ -179,6 +179,7 @@ class Element(object):
         apiclient = APIClient.getInstance()
         apiclient.update(self.__class__.coll_name, ObjectId(self._id), {"tags": tags})
 
+
     def getDetailedString(self):
         """To be inherited and overriden
         Returns a detailed string describing this element. Calls __str__ of children by default.

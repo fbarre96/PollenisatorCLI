@@ -3,6 +3,7 @@ from terminaltables import AsciiTable
 from pollenisatorcli.core.Parameters.parameter import Parameter, ComboParameter
 from pollenisatorcli.utils.utils import command, cls_commands, print_error
 from pollenisatorcli.core.apiclient import APIClient
+name = "Remark" # Used in command decorator
 
 @cls_commands
 class RemarkView(ViewElement):

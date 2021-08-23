@@ -25,6 +25,8 @@ class IMCompleter(Completer):
                 word_before_cursor = cmd_args[-1]
                 # get option for the command with this name
                 options = self.cls.getOptionsForCmd(cmd_args[0], cmd_args[1:], complete_event)
+                if not isinstance(options, list):
+                    options = [x for x in options] # generator to list
                 if options:
                     if isinstance(options[0], str):
                         options.sort()

@@ -1,5 +1,5 @@
 from pollenisatorcli.core.Views.ViewElement import ViewElement
-from pollenisatorcli.utils.utils import command
+from pollenisatorcli.utils.utils import command, style_table
 from terminaltables import AsciiTable
 from colorclass import Color
 from pollenisatorcli.core.Models.Tool import Tool
@@ -11,10 +11,11 @@ from pollenisatorcli.core.Controllers.PortController import PortController
 from pollenisatorcli.core.Controllers.ToolController import ToolController
 from pollenisatorcli.core.Controllers.IpController import IpController
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, TableParameter
-from pollenisatorcli.utils.utils import command, cls_commands
-from prompt_toolkit import print_formatted_text, HTML
-import webbrowser
+from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_text
 from prompt_toolkit import ANSI
+import webbrowser
+name = "IP" # Used in command decorator
+
 
 @cls_commands
 class IpView(ViewElement):
@@ -24,7 +25,7 @@ class IpView(ViewElement):
     def __init__(self, controller, parent_context, prompt_session, **kwargs):
         super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = [
-            Parameter("ip", readonly=self.controller.model.ip != "", required = True, default=self.controller.model.ip, helper="an ip"),
+            Parameter("ip", readonly=self.controller.model.ip != "", required = True, default=self.controller.model.ip, helper="a hostname/ip"),
             Parameter("notes", default=self.controller.model.notes, helper="A space to take notes. Will appear in word report"),
             ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
             TableParameter("infos", ["Info", "Value"], default=self.controller.model.infos, required=False, helper="Extra info table")
@@ -75,21 +76,42 @@ class IpView(ViewElement):
             if object_type == "tools":
                 search_pipeline["lvl"] = "ip"
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(search_pipeline)
-            for obt in objects:
-                print_formatted_text(ANSI(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString())))
+            self.__class__.children_object_types[object_type]["view"].print_info(objects)
             return True
         return False
 
     
     @classmethod
-    def print_info(cls, ips):
-        if len(ips) >= 1:
-            table_data = [['Ip', 'In scope', 'Ports', 'Tools total', 'Waiting', 'Running', 'Done']]
+    def print_info(cls, ips, level_of_info="all"):
+        
+        if ips:
+            if level_of_info == "all":
+                table_data = [['Ip', 'Alias', 'Ports', 'Defects','Tools total', 'Waiting', 'Running', 'Done']]
+                alignements = ["left"]*len(table_data[0])
+                for i in range(4,len(alignements)):
+                    alignements[i] = "right"
+            else:
+                table_data = [['Ip', 'Alias', 'Ports', 'Defects']]
+                alignements = ["left"]*len(table_data[0])
+                for i in range(2, len(alignements)):
+                    alignements[i] = "right"
+
+            oos_table_data = []
             for ip in ips:
                 if isinstance(ip, dict):
                     ip = Ip(ip)
                 if isinstance(ip, IpController):
                     ip = ip.model
+                port_count = ip.getPortCount()
+                hostnames = ip.infos.get("hostname", [])
+                hostname_str = ""
+                if hostnames:
+                    hostname_str = ", ".join(hostnames)
+                ip_str = ", ".join(list(ip.infos.get("ip", "")))
+                if ip_str:
+                    alias_str = str(ip_str)
+                else:
+                    alias_str = hostname_str
                 tools = ip.getTools()
                 done = 0
                 running = 0
@@ -112,21 +134,32 @@ class IpView(ViewElement):
                     ip_str = Color("{autoblack}"+ip_str+"{/autoblack}")
                 else:
                     ip_str = ViewElement.colorWithTags(ip.getTags(), ip.ip)
-                table_data.append([ip_str, len(ip.in_scopes) > 0, ", ".join(strs_ports), str(not_done+running+done), str(not_done), str(running), str(done)])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted_text(ANSI(table.table))
+                defect_count = ip.getDefectCount()
+                strs_ports = ", ".join(strs_ports)
+                if strs_ports.strip() == "":
+                    strs_ports = "-"
+                if len(ip.in_scopes) > 0: # out of scopes ip will be appended after
+                    if level_of_info == "all":
+                        table_data.append([ip_str, alias_str, strs_ports, str(defect_count), str(not_done+running+done), str(not_done), str(running), str(done)])
+                    else:
+                        table_data.append([ip_str, alias_str, str(port_count), str(defect_count)])
+                else:
+                    if level_of_info == "all":
+                        oos_table_data.append([ip_str, alias_str,  strs_ports, str(defect_count), str(not_done+running+done), str(not_done), str(running), str(done)])
+                    else:
+                        oos_table_data.append([ip_str, alias_str, str(port_count), str(defect_count)])
+            for oos_data in oos_table_data:
+                table_data.append(oos_data)
+            table = AsciiTable(table_data)
+            table = style_table(table, alignements)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass
 
     @command
     def browser(self):
-        """Usage : browser
+        """Usage: browser
         Description: open the ip in a web browser
         """
         webbrowser.open_new_tab(self.controller.model.ip)

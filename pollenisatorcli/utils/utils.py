@@ -7,6 +7,7 @@ import json
 import subprocess
 import os
 import socket
+import importlib
 from threading import Timer
 from datetime import datetime
 from bson import ObjectId
@@ -16,6 +17,7 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 from inspect import getfullargspec
+import sys
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -104,10 +106,14 @@ def loadClientConfig():
         cfg = {"host":"127.0.0.1", "port":5000, "https":False}
     return cfg
 
+
+
+
 # Command decorator
 def command(func):
-    
     func._command = True
+    module = importlib.import_module(func.__module__)
+    func._module = module.name
     @wraps(func)
     def wrapper(*args, **kwargs):
         cmd_args = args if args is not None else []
@@ -137,12 +143,15 @@ def command(func):
 # Get all commands
 def cls_commands(cls):
     cls._cmd_list = []
+    cls._module_cmds = dict()
     for commandName in dir(cls):
         command = getattr(cls, commandName)
-        if hasattr(command, '_command'):
+        if hasattr(command, '_module'):
             cls._cmd_list.insert(0, commandName)
-
+            moduleName = getattr(command, '_module')
+            cls._module_cmds[moduleName] = cls._module_cmds.get(moduleName, []) + [command]
     return cls
+
 
 def stringToDate(datestring):
     """Converts a string with format '%d/%m/%Y %H:%M:%S' to a python date object.
@@ -194,6 +203,7 @@ style = Style.from_dict({
     'valid': '#11ff00',
     'success': '#11ff00',
     'command': '#4444ff bold',
+    'module': '#44ff44 bold',
     'cmd': 'italic',
     'parameter': '#44ff00 italic',
     'important': 'bold',
@@ -207,6 +217,13 @@ def print_formatted(msg, cls="normal"):
     text = FormattedText([
         (f'class:{cls}', msg)
     ])
+    print_formatted_text(text, style=style)
+
+def print_formatted_texts(listOfMsg):
+    formatted = []
+    for msg, clas in listOfMsg:
+        formatted.append((f'class:{clas}', msg))
+    text = FormattedText(formatted)
     print_formatted_text(text, style=style)
 
 def print_error(msg):
@@ -382,3 +399,17 @@ def execute(command, timeout=None, printStdout=True):
         return proc.returncode, stdout
     except KeyboardInterrupt as e:
         raise e
+
+def style_table(table, alignements=None):
+    if alignements:
+        for i, al in enumerate(alignements):
+            table.justify_columns[i] = al
+    table.inner_column_border = True
+    table.CHAR_H_INNER_VERTICAL = " "
+    table.CHAR_INNER_VERTICAL = " "
+    table.CHAR_H_INNER_INTERSECT = " "
+    table.inner_footing_row_border = False
+    table.inner_heading_row_border = True
+    table.inner_row_border = False
+    table.outer_border = False
+    return table

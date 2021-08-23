@@ -11,7 +11,7 @@ from pollenisatorcli.core.Controllers.ToolController import ToolController
 from pollenisatorcli.core.Controllers.DefectController import DefectController
 from pollenisatorcli.core.Parameters.parameter import Parameter, DateParameter, ComboParameter, ListParameter
 from pollenisatorcli.core.apiclient import APIClient
-from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted_text, print_formatted, execute
+from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted_text, print_formatted, execute, style_table
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit import prompt
@@ -19,6 +19,7 @@ import os
 from shutil import which
 import webbrowser
 from prompt_toolkit import ANSI
+name = "Tool" # Used in command decorator
 
 
 @cls_commands
@@ -36,7 +37,7 @@ class ToolView(ViewElement):
         else:
             self.controller.model.lvl = "wave"
         if self.controller.model.lvl in ["port", "ip"] and "done" in self.controller.getStatus():
-            self._cmd_list.append("browser")
+            self.__class__._cmd_list.append("browser")
         command_list = Command.fetchObjects({"lvl": self.controller.model.lvl}, APIClient.getInstance().getCurrentPentest())
         command_names = ["None"]
         for command_doc in command_list:
@@ -65,7 +66,7 @@ class ToolView(ViewElement):
 
     @command
     def launch(self, local=None):
-        """Usage : launch ["local"]
+        """Usage: launch ["local"]
 
         Args:
             local: if local is given, the tool will be executed from this computer (the executor must have it in its local config toolds.d folder) 
@@ -127,7 +128,7 @@ class ToolView(ViewElement):
 
     @command
     def reset(self):
-        """Usage : reset 
+        """Usage: reset 
 
         Description: Reset the results of this tool if the tool is done only
         """
@@ -141,7 +142,7 @@ class ToolView(ViewElement):
 
     @command
     def stop(self):
-        """Usage : stop 
+        """Usage: stop 
 
         Description: stop the exection of this tool if the tool is running only
         """
@@ -163,7 +164,7 @@ class ToolView(ViewElement):
 
     @command
     def view(self):
-        """Usage : view 
+        """Usage: view 
 
         Description: Download and tries to open the result file. Only if the tool is done. tries to open it using xdg-open or os.startsfile
         """
@@ -201,7 +202,7 @@ class ToolView(ViewElement):
 
     @classmethod
     def print_info(cls, tools):
-        if len(tools) >= 1:
+        if tools:
             table_data = [['Name', 'Assigned', 'Status', 'Started at', 'Ended at']]
             for tool in tools:
                 if isinstance(tool, dict):
@@ -222,20 +223,16 @@ class ToolView(ViewElement):
                     status_str = status
                 assigned_str = tool.getDetailedString()
                 table_data.append([title_str, assigned_str, status_str, tool.dated, tool.datef])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print_formatted_text(ANSI(table.table))
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             print("No information to display")
             pass
     
     def browser(self):
-        """Usage : browser
+        """Usage: browser
         Description: open the ip:port in a web browser
         """
         if self.controller.model.lvl == "ip":

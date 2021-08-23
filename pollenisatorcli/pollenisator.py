@@ -21,8 +21,8 @@ Options:
 version = 1.0
 import sys
 from datetime import datetime
-from shlex import split
 import asyncio
+import shlex
 from docopt import DocoptExit, docopt
 from prompt_toolkit import PromptSession
 from prompt_toolkit import prompt
@@ -36,7 +36,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.core.FormModules.newPentestForm import NewPentestForm
 from pollenisatorcli.core.FormModules.settingsForms import PollenisatorSettings
-from pollenisatorcli.core.Modules.module import Module
+from pollenisatorcli.core.Modules.GlobalModule import GlobalModule
 from pollenisatorcli.core.Modules.pentest import Pentest
 from pollenisatorcli.core.Modules.commandtemplate import CommandTemplate
 from pollenisatorcli.utils.completer import IMCompleter
@@ -46,11 +46,11 @@ from pollenisatorcli.utils.utils import (CmdError, cls_commands, command,
 
 from colorclass import Windows
 import os
-import shlex
 from multiprocessing.connection import Client
+name = "Pollenisator dbs"
 
 @cls_commands
-class Pollenisator(Module):
+class Pollenisator(GlobalModule):
     def __init__(self):
         args = docopt(__doc__, version=version)
         client_config = loadClientConfig()
@@ -101,7 +101,7 @@ class Pollenisator(Module):
     def parse_result(self, result):
         if len(result):
             if not self.context_switching(result):
-                command = split(result)
+                command = result.split(" ") # shlex.split will remove quotes i.e : query type == "tool"
                 if not command:
                     return
                 try:
@@ -135,7 +135,7 @@ class Pollenisator(Module):
 
     @command
     def ls(self):
-        """Usage : ls
+        """Usage: ls
         
         Description : ls existings pentests
         """  
@@ -145,22 +145,22 @@ class Pollenisator(Module):
 
     @command
     def command_templates(self):
-        """Usage : command_templates 
+        """Usage: command_templates 
         
         Description : Open the submodule to edit command templates for every pentest
         """
         self.set_context(self.contexts["command_templates"])
     @command
     def global_settings(self):
-        """Usage : settings 
+        """Usage: settings 
         
-        Description : Open the pollensiator  glboal settings module
+        Description : Open pollenisator global settings module
         """
         self.set_context(self.contexts["settings"])
     
     @command
     def open(self, pentest_name):
-        """Usage : open <pentest_name>
+        """Usage: open <pentest_name>
         
         Description : Open the given database name and get the CLI in pentesting mode.
 
@@ -177,7 +177,7 @@ class Pollenisator(Module):
         self.set_context(self.contexts["pentest"])
     @command
     def new(self):
-        """Usage : new
+        """Usage: new
         
         Description : Start the pentest creation wizard
         """ 
@@ -185,7 +185,7 @@ class Pollenisator(Module):
 
     @command
     def delete(self, pentest_name):
-        """Usage : delete <pentest_name>
+        """Usage: delete <pentest_name>
         
         Description : Delete the pentest given a pentest name
         """ 
@@ -205,7 +205,7 @@ class Pollenisator(Module):
 
     @command
     def duplicate(self, from_pentest, to_pentest):
-        """Usage : duplicate <pentest_name> <to_pentest>
+        """Usage: duplicate <pentest_name> <to_pentest>
 
         Description : Duplicate the given pentest to a new database
         Arguments:
@@ -306,7 +306,7 @@ class Pollenisator(Module):
             return (Completion(completion.text, completion.start_position, display=completion.display) 
                         for completion in self.prompt_session.path_completer.get_completions(Document(cmd_args[0]), complete_event))
         elif cmd == "help":
-            return [""]+self._cmd_list
+            return [""]+self.__class__._cmd_list
         return []
 
 def pollex():

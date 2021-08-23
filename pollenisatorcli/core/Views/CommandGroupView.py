@@ -4,7 +4,10 @@ from pollenisatorcli.core.Models.Command import Command
 from pollenisatorcli.core.Controllers.CommandGroupController import CommandGroupController
 from pollenisatorcli.core.Parameters.parameter import Parameter, ListParameter, IntParameter
 from terminaltables import AsciiTable
-from pollenisatorcli.utils.utils import command, cls_commands
+from pollenisatorcli.utils.utils import command, cls_commands, style_table, print_formatted_text
+from prompt_toolkit import ANSI
+
+name = "Command Group" # Used in command decorator
 
 @cls_commands
 class CommandGroupView(ViewElement):
@@ -14,14 +17,14 @@ class CommandGroupView(ViewElement):
         self.fields = [
             Parameter("name",  required=True, readonly=self.controller.model.name != "", default=self.controller.model.name,
                       helper="The group of commands name"),
-            ListParameter("commands", default=self.controller.model.commands, validator=self.validateCommand, completor=self.getCommandList, helper="The command list (comma separated) in this group"),
+            ListParameter("commands", default=self.controller.model.commands, validator=self.validatorCommand, completor=self.getCommandList, helper="The command list (comma separated) in this group"),
             IntParameter("max_thread", default=self.controller.model.max_thread, helper="Set a maximum of parallele execution of this command for ONE worker"),
         ]
         
 
     @classmethod
     def print_info(cls, command_groups):
-        if len(command_groups) >= 1:
+        if command_groups:
             table_data = [['Name', 'Commands', 'Threads']]
             for command_group in command_groups:
                 if isinstance(command_group, dict):
@@ -30,17 +33,13 @@ class CommandGroupView(ViewElement):
                     command_group = command_group.model
                 table_data.append([command_group.name, command_group.commands, str(command_group.max_thread)])
                 table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = True
-                table.outer_border = False
-            print(table.table)
+                table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass
 
-    def validateCommand(self, value):
+    def validatorCommand(self, value):
         return "" if  value in Command.getList() else f"{value} is not an existing command"
     
     def getCommandList(self, args):

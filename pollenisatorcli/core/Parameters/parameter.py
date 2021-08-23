@@ -16,6 +16,9 @@ class Parameter:
         self.help = helper
         self.hidden = False
 
+    def isWritable(self):
+        return not self.readonly
+        
     def getValue(self):
         return str(self)
     

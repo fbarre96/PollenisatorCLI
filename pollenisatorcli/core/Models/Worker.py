@@ -26,32 +26,45 @@ class Worker(Element):
             valuesFromDb = {}
         super().__init__(valuesFromDb.get("_id", None), valuesFromDb.get("parent", None),  valuesFromDb.get(
             "tags", []), valuesFromDb.get("infos", {}))
-        self.initialize(valuesFromDb.get("name", ""), valuesFromDb.get("excludedDatabases", []),
+        self.initialize(valuesFromDb.get("name", ""), valuesFromDb.get("pentests", []),
                         valuesFromDb.get("registeredCommands", []), valuesFromDb.get("infos", {}))
 
-    def initialize(self, name, excludedDatabases=[], registeredCommands=[], infos=None):
+    def initialize(self, name, pentests=[], registeredCommands=[], infos=None):
         """Set values of worker
         Args:
             name: the worker name
-            excludedDatabases: a list of databases the worker will not work for
+            pentests: a list of databases the worker will work for
             registeredCommands: the list of registred command (known by this worker)
             infos: a dictionnary with key values as additional information. Default to None
         Returns:
             this object
         """
         self.name = name
-        self.excludedDatabases = excludedDatabases
+        self.pentests = pentests
         self.registeredCommands = registeredCommands
         self.infos = infos if infos is not None else {}
         return self
+
+    def set_inclusion(self):
+        """Set worker as included in current pentest
+        """
+        apiclient = APIClient.getInstance()
+        isIncluded = apiclient.getCurrentPentest() in self.pentests
+        apiclient.setWorkerInclusion(self.name, not (isIncluded))
+        isIncluded = not isIncluded
+        if isIncluded and apiclient.getCurrentPentest() not in self.pentests:
+            self.pentests.append(apiclient.getCurrentPentest())
+        else:
+            if apiclient.getCurrentPentest() in self.pentests:
+                self.pentests.remove(apiclient.getCurrentPentest())
+        return isIncluded
 
     def delete(self):
         """
         Delete the Interval represented by this model in database.
         """
         apiclient = APIClient.getInstance()
-        apiclient.deleteWorker(self.name) 
-
+        return apiclient.deleteWorker(self.name)
 
     def __str__(self):
         """
@@ -64,8 +77,6 @@ class Worker(Element):
 
     def getDetailedString(self):
         return self.name
-
-    
 
     def getDbKey(self):
         """Return a dict from model to use as unique composed key.

@@ -100,6 +100,7 @@ class Interval(Element):
         """
         return f"{self.dated} - {self.datef}"
 
+
     def getDetailedString(self):
         return self.wave+":"+str(self)
 

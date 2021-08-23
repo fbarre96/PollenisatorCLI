@@ -15,6 +15,7 @@ from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_t
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
 import re
 from prompt_toolkit import ANSI
+name = "Wave" # Used in command decorator
 
 @cls_commands
 class WaveView(ViewElement):
@@ -83,14 +84,13 @@ class WaveView(ViewElement):
             if object_type == "tools":
                 search_pipeline["lvl"] = "wave"
             objects = self.__class__.children_object_types[object_type]["model"].fetchObjects(search_pipeline)
-            for obt in objects:
-                print_formatted_text(ANSI(ViewElement.colorWithTags(obt.getTags(), obt.getDetailedString())))
+            self.__class__.children_object_types[object_type]["view"].print_info(objects)
             return True
         return False
 
     @classmethod
     def print_info(cls, waves):
-        if len(waves) >= 1:
+        if waves:
             table_data = [['Wave', 'Currently launchable', 'Tools : waiting', 'running', 'done']]
             for wave in waves:
                 if isinstance(wave, dict):

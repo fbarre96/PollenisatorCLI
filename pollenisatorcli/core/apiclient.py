@@ -79,6 +79,9 @@ class APIClient():
 
     def tryConnection(self, config=cfg):
         try:
+            is_https = config.get("https", True)
+            http_proto = "https" if str(is_https).lower() == "true" or is_https == 1 else "http"
+            self.api_url_base = http_proto+"://"+config.get("host")+":"+config.get("port")+"/api/v1/"
             response = requests.get(self.api_url_base, headers=self.headers)
         except Exception:
             return False
@@ -95,9 +98,9 @@ class APIClient():
         else:
             return None
 
-    def setWorkerExclusion(self, worker_name, isExcluded):
-        api_url = '{0}workers/{1}/setExclusion'.format(self.api_url_base, worker_name)
-        data = {"db":self.getCurrentPentest(), "setExcluded":isExcluded}
+    def setWorkerInclusion(self, worker_name, setInclusion):
+        api_url = '{0}workers/{1}/setInclusion'.format(self.api_url_base, worker_name)
+        data = {"db":self.getCurrentPentest(), "setInclusion":setInclusion}
         response = requests.put(api_url, headers=self.headers, data=json.dumps(data, cls=JSONEncoder))
         if response.status_code == 200:
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
@@ -482,7 +485,7 @@ class APIClient():
         response = requests.delete(api_url, headers=self.headers, proxies=proxies, verify=False)
         if response.status_code == 200:
             data = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
-            return data
+            return data["n"]
         return None
 
     def sendStartAutoScan(self):

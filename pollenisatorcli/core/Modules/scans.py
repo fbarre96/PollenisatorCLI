@@ -1,6 +1,6 @@
 from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted, print_formatted_text
 from pollenisatorcli.utils.completer import IMCompleter
-from pollenisatorcli.core.Modules.module import Module
+from pollenisatorcli.core.Modules.GlobalModule import GlobalModule
 from pollenisatorcli.core.Models.Tool import Tool
 from pollenisatorcli.core.Views.ToolView import ToolView
 from pollenisatorcli.core.Models.Worker import Worker
@@ -17,9 +17,11 @@ import re
 import git
 import shutil
 import os
+name = "Scans" # Used in command decorator
+
 
 @cls_commands
-class Scans(Module):
+class Scans(GlobalModule):
     def __init__(self, parent_context, prompt_session):
         super().__init__('Scans', parent_context, "Manage Scans.", FormattedText([('class:title', "Scan manager"),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
 
@@ -53,7 +55,7 @@ class Scans(Module):
         """Usage: boot_worker <True|False>
         Description: will launch a worker in local docker
         """
-        x = threading.Thread(target=start_docker, args=(no_cache))
+        x = threading.Thread(target=start_docker, args=(no_cache,))
         x.start()
 
     @command
@@ -63,6 +65,20 @@ class Scans(Module):
         Description: Equivalent to ls scans
         """
         self.ls("scans")
+
+    @command
+    def set_inclusion(self, worker):
+        """Usage: set_inclusion <worker>
+
+        Description: set worker inclusion for current pentest
+        """
+        apiclient = APIClient.getInstance()
+        workers = apiclient.getWorkers()
+        worker_t = None
+        for worker_o in workers:
+            if worker_o["name"] == worker:
+                worker_t = worker_o
+        Worker(worker_t).set_inclusion()
 
     @command
     def autoscan(self, action):
@@ -86,7 +102,7 @@ class Scans(Module):
             if autoscan_status:
                 print_error("An autoscan is already running")
             else:
-                workers = apiclient.getWorkers({"excludedDatabases":{"$nin":[apiclient.getCurrentPentest()]}})
+                workers = apiclient.getWorkers({"pentests":apiclient.getCurrentPentest()})
                 workers = [w for w in workers]
                 if len(workers) == 0:
                     print_error("No worker found, check workers list to see if there are workers registered and allowed for this pentest")
@@ -137,7 +153,7 @@ class Scans(Module):
             return ["scans", "workers"]
         elif cmd == "autoscan":
             return ["start", "stop", "status"]
-        elif cmd == "edit":
+        elif cmd == "edit" or "set_inclusion":
             workers = apiclient.getWorkers() 
             if workers is not None:
                 return [x["name"] for x in workers]
@@ -181,7 +197,7 @@ def start_docker(force_reinstall):
         network_mode = "host"
     else:
         network_mode = None
-    container = client.containers.run(image=image[0], network_mode=network_mode, volumes={os.path.join(Utils.getMainDir(), "PollenisatorWorker"):{'bind':'/home/Pollenisator', 'mode':'rw'}}, detach=True)
+    container = client.containers.run(image=image[0], network_mode=network_mode, volumes={os.path.join(getMainDir(), "PollenisatorWorker"):{'bind':'/home/Pollenisator', 'mode':'rw'}}, detach=True)
     print_formatted("Checking if worker is running")
     print_formatted(container.id)
     if container.logs() != b"":

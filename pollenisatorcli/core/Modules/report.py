@@ -20,6 +20,7 @@ import os
 from shutil import which
 from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit import ANSI
+name = "Report" # Used in command decorator
 
 @cls_commands
 class Report(FormModule):
@@ -43,7 +44,7 @@ class Report(FormModule):
 
     @command
     def set(self, parameter_name, value, *args):
-        """Usage : set <parameter_name> <value>
+        """Usage: set <parameter_name> <value>
         
         Description : Set the parameter to the given value
 
@@ -129,7 +130,7 @@ class Report(FormModule):
 
     @command
     def move(self, defect_id, target_id):
-        """Usage : move <defect_id> <line id to go to>
+        """Usage: move <defect_id> <line id to go to>
         Description : Change the defect order by moving a defect to another line, sliding every other line below
         Args:
             defect_id : the defect to move line number
@@ -157,7 +158,7 @@ class Report(FormModule):
         
     @command
     def remove(self, defect_id):
-        """Usage : remove <defect_id>
+        """Usage: remove <defect_id>
         Description : Remove the defect 
         Args:
             defect_id : the defect id to remove
@@ -175,7 +176,7 @@ class Report(FormModule):
    
     @command 
     def setMainRedactor(self, main_redac_name):
-        """Usage : setMainRedactor <main_redac_name>
+        """Usage: setMainRedactor <main_redac_name>
         Description : Change all redactors N/A to this redactor's name
         Args:
             main_redac_name : the pentester name to replace N/A. Must exists in the pentest settings
@@ -194,7 +195,7 @@ class Report(FormModule):
     
     @command
     def edit(self, defect_id):
-        """Usage : edit <defect_id>
+        """Usage: edit <defect_id>
         Description : edit the defect 
         Args:
             defect_id : the defect id to edit
@@ -204,24 +205,26 @@ class Report(FormModule):
 
     @command
     def add_defect(self):
-        """Usage : add_defect 
+        """Usage: add_defect 
         Description : add a global defect in database
         """
-        view = DefectView(DefectController(Defect({"ip":""})), self, self.prompt_session, is_insert=True)
+        view = DefectView(DefectController(Defect({"ip":""})), self, self.prompt_session)
+        view.is_insert = True
         self.set_context(view)
 
     @command
     def add_remark(self):
-        """Usage : add_remark
+        """Usage: add_remark
         Description : add a remark in database
         """
-        view = RemarkView(ElementController(Remark()), self, self.prompt_session, is_insert=True)
+        view = RemarkView(ElementController(Remark()), self, self.prompt_session)
+        view.is_insert = True
         self.set_context(view)
         self.updateRemarkList()
     
     @command
     def remove_remark(self, remarkID):
-        """Usage : remove_remark <remarkID>s
+        """Usage: remove_remark <remarkID>s
         Description : remove a remark in database
         """
         try:
@@ -234,7 +237,7 @@ class Report(FormModule):
 
     @command
     def generate(self, report_type):
-        """Usage : generate <"word"|"powerpoint">
+        """Usage: generate <"word"|"powerpoint">
         Description : request a report based on the defect table
         Args:
             report_type: either "word" or "powerpoint"
@@ -265,7 +268,7 @@ class Report(FormModule):
                 os.system("open "+os.path.dirname(res))
     @command
     def download(self, lang, template_name):
-        """Usage : download  <lang> <template_name>
+        """Usage: download  <lang> <template_name>
         Description :Download a template for a lang
         """
         apiclient = APIClient.getInstance()

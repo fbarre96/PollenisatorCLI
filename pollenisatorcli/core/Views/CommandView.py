@@ -1,12 +1,12 @@
 from pollenisatorcli.core.Views.ViewElement import ViewElement
 from pollenisatorcli.core.Models.Command import Command
 from pollenisatorcli.core.Controllers.CommandController import CommandController
-from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter
 from terminaltables import AsciiTable
 from pollenisatorcli.core.settings import Settings
 import re
 from pollenisatorcli.utils.utils import command, cls_commands
+name = "Command" # Used in command decorator
 
 @cls_commands
 class CommandView(ViewElement):
@@ -32,7 +32,7 @@ class CommandView(ViewElement):
 
     @classmethod
     def print_info(cls, commands):
-        if len(commands) >= 1:
+        if commands:
             table_data = [['Name', 'Options', 'Level', 'Priority', 'Safe', 'Max Threads']]
             for command in commands:
                 if isinstance(command, dict):

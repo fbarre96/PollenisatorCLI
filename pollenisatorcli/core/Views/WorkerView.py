@@ -1,10 +1,12 @@
 from pollenisatorcli.core.Views.ViewElement import ViewElement
 from terminaltables import AsciiTable
 from pollenisatorcli.core.apiclient import APIClient
-from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_text, print_formatted, print_formatted, print_error
+from pollenisatorcli.utils.utils import command, cls_commands, print_formatted_text, print_formatted, print_error, style_table
 from pollenisatorcli.core.Parameters.parameter import Parameter, BoolParameter, IntParameter, ListParameter, HiddenParameter, ComboParameter, ListParameter
 from pollenisatorcli.core.Models.Command import Command
 from pollenisatorcli.core.Models.Worker import Worker
+from prompt_toolkit import ANSI
+name = "Worker" # Used in command decorator
 
 @cls_commands
 class WorkerView(ViewElement):
@@ -14,7 +16,7 @@ class WorkerView(ViewElement):
         apiclient = APIClient.getInstance()
         self.fields = [
             Parameter("name", readonly=True, required = True,  default=self.controller.model.name, helper="Worker name"),
-            BoolParameter("excluded", readonly=True, required = True,  default=apiclient.getCurrentPentest() in self.controller.model.excludedDatabases, helper="Worker will not work for any of them"),   
+            BoolParameter("included", readonly=True, required=True,  default=apiclient.getCurrentPentest() in self.controller.model.pentests, helper="Is worker added to this pentest ?"),   
             ListParameter("registeredCommands", readonly=True, required = True,  default=self.controller.model.registeredCommands, helper="The commands that this worker knows how to launch"),   
         ]
 
@@ -23,20 +25,16 @@ class WorkerView(ViewElement):
         registeredCommands = []
         apiclient = APIClient.getInstance()
         
-        if len(workers) >= 1:
-            table_data = [['Name', 'excluded', 'registered commands', ]]
+        if workers:
+            table_data = [['Name', 'Included', ]] #'registered commands',
             for worker in workers:
                 if isinstance(worker, dict):
                     worker = Worker(worker)
-                table_data.append([worker.name, apiclient.getCurrentPentest() in worker.excludedDatabases, ", ".join(worker.registeredCommands)])
+                table_data.append([worker.name, apiclient.getCurrentPentest() in worker.pentests, ]) # ", ".join(worker.registeredCommands)
                 registeredCommands += worker.registeredCommands
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = True
-                table.outer_border = False
-            print(table.table)
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass
@@ -48,22 +46,14 @@ class WorkerView(ViewElement):
         print_formatted(f"Those commands are not registered by any worker:\n {chr(10).join(not_registered)}","warning")
 
     @command
-    def set_exclusion(self):
-        """Usage: set_exclusion
-        Description: Will change the exclusion setting of this worker for this pentest
+    def set_inclusion(self):
+        """Usage: set_inclusion
+        Description: Will change the inclusion setting of this worker for this pentest
         """
-        apiclient = APIClient.getInstance()
-        isExcluded = apiclient.getCurrentPentest() in self.controller.model.excludedDatabases
-        apiclient.setWorkerExclusion(self.controller.model.name, not (isExcluded))
-        isExcluded = not isExcluded
-        if isExcluded and apiclient.getCurrentPentest() not in self.controller.model.excludedDatabases:
-            self.controller.model.excludedDatabases.append(apiclient.getCurrentPentest())
-        else:
-            if apiclient.getCurrentPentest() in self.controller.model.excludedDatabases:
-                self.controller.model.excludedDatabases.remove(apiclient.getCurrentPentest())
+        included = self.controller.set_inclusion()
         for field in self.fields:
-            if field.name == "excluded":
-                field.value = str(apiclient.getCurrentPentest() in self.controller.model.excludedDatabases).lower()
+            if field.name == "included":
+                field.value = included
 
     @command
     def set_command_config(self, commandname, remote_bin_path, plugin):

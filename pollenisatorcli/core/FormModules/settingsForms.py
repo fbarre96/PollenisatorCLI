@@ -5,13 +5,15 @@ from pollenisatorcli.core.Parameters.parameter import Parameter, TableParameter,
 from pollenisatorcli.core.settings import Settings
 from pollenisatorcli.core.apiclient import APIClient
 from prompt_toolkit.formatted_text import FormattedText
-
+name = "Settings form" # Used in command decorator
 
 @cls_commands
 class PollenisatorSettings(FormModule):
     def __init__(self, parent_context, prompt_session):
         super().__init__('Pollenisator settings', parent_context, "Pollenisator global settings.", FormattedText(
             [('class:title', f"{parent_context.name}"), ("class:subtitle", f" global settings"), ("class:angled_bracket", " > ")]), IMCompleter(self), prompt_session)
+        self.validateCommand = "save"
+        self.reload()
 
     def reload(self):
         settings = Settings()
@@ -27,7 +29,6 @@ class PollenisatorSettings(FormModule):
     def show(self):
         """Usage: show
         """
-        self.reload()
         super().show()
 
     @command

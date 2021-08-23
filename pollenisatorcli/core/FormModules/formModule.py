@@ -5,17 +5,19 @@ from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.apiclient import APIClient
 from terminaltables import AsciiTable
 from prompt_toolkit.formatted_text import FormattedText
+name = "Form" # Used in command decorator
 
 @cls_commands
 class FormModule(Module):
     def __init__(self, name, parent_context, description, prompt, completer, prompt_session):
         super().__init__(name, parent_context, description, prompt, completer, prompt_session)
         self.fields = []
+        self.validateCommand = "(SEE HELP)"
 
     
     @command
     def set(self, parameter_name, value, *args):
-        """Usage : set <parameter_name> <value>
+        """Usage: set <parameter_name> <value>
         
         Description : Set the parameter to the given value
 
@@ -75,8 +77,17 @@ class FormModule(Module):
         Returns a list of valid options for the given cmd
         """  
         if cmd == "set":
-            if len(cmd_args) <= 1: # param name to complete
-                return [x.name for x in self.fields]
+            ret = []
+            if len(cmd_args) == 1:
+                params = cmd_args[0].split(".")
+                field = self.getFieldByName(params[0])
+                if isinstance(field, TableParameter):
+                    for key in field.getKeys():
+                        ret.append(cmd_args[0]+"."+key)
+                if ret:
+                    return ret
+                ret = [x.name for x in self.fields if x.isWritable() and not x.hidden]
+                return ret
             else: # param value to complete
                 for field in self.fields:
                     if cmd_args[0].lower() == field.name.lower():
@@ -85,13 +96,13 @@ class FormModule(Module):
             if len(cmd_args) <= 1: # param name to complete
                 return [x.name for x in self.fields]
         elif cmd == "help":
-            return [""]+self._cmd_list+[x.name for x in self.fields] # pylint: disable=no-member
+            return [""]+self.__class__._cmd_list+[x.name for x in self.fields] # pylint: disable=no-member
         
         return []
 
     @command
     def show(self):
-        """Usage : show
+        """Usage: show
         
         Description : show the parameters and their assigned valued. required parameters ends with a *
         """ 
@@ -129,6 +140,11 @@ class FormModule(Module):
             if x.name.lower() == parameter_name.lower() and not x.hidden:
                 return x.getHelp()
         return None
+
+    def getFieldByName(self, name):
+        for field in self.fields:
+            if field.name == name:
+                return field
     
     def checkRequiredFields(self):
         for field in self.fields:
@@ -139,7 +155,7 @@ class FormModule(Module):
     
     @command
     def help(self, parameter_or_cmd_name=""):
-        """Usage : help [parameter or command name]
+        """Usage: help [parameter or command name]
         
         Description : show help menu or an helper on how to use the parameter or command name if one is given.
         """ 
@@ -151,17 +167,11 @@ class FormModule(Module):
         if res is not None:
             print_error(res)
             return
-        print_formatted(f"""
-{self.name} form
-=================
-{self.description}
-COMMANDS:""")
-        for x in self._cmd_list: # pylint: disable=no-member
-            print_formatted(f'\t{x}', 'command')
+        self.print_command_help() # Show help for Form only
         print_formatted("=================")
         print_formatted("""PARAMETERS :""")
         for x in self.fields:
-            if not x.hidden:
+            if not x.hidden and x.isWritable():
                 print_formatted(f'\t{x.name}', 'parameter')
         print_formatted("""
 For more information about any parameter or command type :""")
@@ -173,22 +183,23 @@ For more information about any parameter or command type :""")
 
         Description : Will prompt every parameters 
         """
-        self.set_context(FormWizard(self, self.prompt_session, self))
+        self.set_context(FormWizard(self, self.prompt_session, self, self.validateCommand))
         
 @cls_commands
 class FormWizard(Module):
-    def __init__(self, parent_context, prompt_session, form):
+    def __init__(self, parent_context, prompt_session, form, validationCommand=" "):
         super().__init__('Wizard', parent_context, "Fill the form with a wizard. TAB to autocomplete", ">", None, prompt_session)
         self.form = form
         print_formatted("Wizard started : type help or exit at any moment. Type skip for not required parameters that you don't want to set", "info")
         self.current_field = -1
+        self.validationCommand = validationCommand
         self.nextField()
     
     def nextField(self):
         self.current_field += 1
         if self.current_field >= len(self.form.fields):
             self.parent_context.show()
-            print_formatted("Check values and use the command to validate this form (help)", "warning")
+            print_formatted(f"Check values and use the command '{self.validationCommand}' to validate this form (help)", "warning")
             self.exit()
         else:
             if self.form.fields[self.current_field].hidden or self.form.fields[self.current_field].readonly:
@@ -223,6 +234,9 @@ class FormWizard(Module):
     
     @command
     def help(self):
+        """Usage: help
+        Description : show help
+        """
         res = self.form.fields[self.current_field].getHelp()
         if res is not None:
             print_formatted(res, 'parameter')

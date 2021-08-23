@@ -1,13 +1,15 @@
 from pollenisatorcli.core.Views.ViewElement import ViewElement
 from terminaltables import AsciiTable
 from colorclass import Color
+from prompt_toolkit import ANSI
 from pollenisatorcli.utils.utils import dateToString
 from pollenisatorcli.core.Models.Interval import Interval
 from pollenisatorcli.core.Controllers.IntervalController import IntervalController
 from pollenisatorcli.core.Models.Wave import Wave
 from pollenisatorcli.core.Parameters.parameter import DateParameter, ComboParameter
-from pollenisatorcli.utils.utils import command, cls_commands
+from pollenisatorcli.utils.utils import command, cls_commands, style_table, print_formatted_text
 from pollenisatorcli.core.apiclient import APIClient
+name = "Interval" # Used in command decorator
 
 @cls_commands
 class IntervalView(ViewElement):
@@ -32,7 +34,7 @@ class IntervalView(ViewElement):
 
     @classmethod
     def print_info(cls, intervals):
-        if len(intervals) >= 1:
+        if intervals:
             table_data = [['Wave', 'Start date', 'End date']]
             for interval in intervals:
                 if isinstance(interval, dict):
@@ -40,13 +42,9 @@ class IntervalView(ViewElement):
                 if isinstance(interval, IntervalController):
                     interval = interval.model
                 table_data.append([interval.wave, interval.dated, interval.datef])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = False
-                table.outer_border = False
-            print(table.table)
+            table = AsciiTable(table_data)
+            table = style_table(table)
+            print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case
             pass
