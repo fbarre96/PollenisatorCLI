@@ -13,6 +13,7 @@ from pollenisatorcli.AutoScanWorker import executeCommand
 from prompt_toolkit.shortcuts import ProgressBar
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
+from prompt_toolkit.shortcuts import confirm
 import random
 import string
 import os
@@ -27,17 +28,7 @@ name = "Global"
 class GlobalModule(Module):
     def __init__(self, name, parent_context, description, prompt, completer, prompt_session):
         super().__init__(name, parent_context, description, prompt,  completer, prompt_session)
-
     
-    @command
-    def help(self, command_help=""):
-        # Global help
-        res = self.getCommandHelp(command_help)
-        if res is not None:
-            print_formatted(res)
-            return
-        self.print_command_help()
-        self.print_help_footer()
         
     @command
     def exit(self):
@@ -179,9 +170,14 @@ class GlobalModule(Module):
             tool.initialize(cmdName, "Custom commands", None, None, None, None, "wave", text=cmdArgs, dated="None", datef="None", scanner_ip="localhost", infos={"args":" ".join(args)})
         res, iid = tool.addInDb()
         if res:
-            res, msg = executeCommand(APIClient.getInstance(), str(iid), "auto-detect", True)
+            res, output_str = executeCommand(APIClient.getInstance(), str(iid), "auto-detect", True, True)
             if not res:
-                print_error(msg)
+                print_error(output_str)
+            else:
+                print_formatted(f"Output created here : {output_str}")
+                answer = confirm("Print it here ? ")
+                if answer:
+                    os.system(f"cat {output_str}")
         return
 
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
@@ -211,70 +207,7 @@ class GlobalModule(Module):
             return ret
         return []
 
-    @command
-    def query(self, *args):
-        """Usage: query <terms[ terms...]|tag_name>
-
-        Description : Print a list of object title matching the query
-
-        Arguments:
-            search_query: A python like condition with:
-                            - condition operators (==, !=, >, < , <=, >=, not in, in, regex) 
-                            - boolean logic (and, or, not)
-            Search examples in match (python condition):
-            type == "port"
-            type == "port" and port == 443
-            type == "port" and port regex "443$"
-            type == "port" and (port == 80 or port == 443)
-            type == "port" and port != 443
-            type == "port" and port != 443 and port != 80
-            type == "defect"
-            type == "defect" and "Foo" in title
-            type == "ip" and ip regex "[A-Za-z]"
-            type == "ip" and ip regex "^1\.2"
-            type == "tool" and "done" in status
-            type == "tool" and "done" not in status
-            type == "tool" and "ready" in status
-            type == "ip" and infos.key == "ABC" 
-        """
-        from pollenisatorcli.core.Views.CommandView import CommandView
-        from pollenisatorcli.core.Views.WaveView import WaveView
-        from pollenisatorcli.core.Views.ScopeView import ScopeView
-        from pollenisatorcli.core.Views.IpView import IpView
-        from pollenisatorcli.core.Views.PortView import PortView
-        from pollenisatorcli.core.Views.DefectView import DefectView
-        from pollenisatorcli.core.Views.ToolView import ToolView
-        search_query = " ".join(args)
-        apiclient = APIClient.getInstance()
-        if apiclient.getCurrentPentest() is None:
-            print_error("Use open to connect to a pentest first")
-            return
-        settings = Settings()
-        settings.reloadSettings()
-        avail_tags = settings.getTags()
-        if search_query in avail_tags:
-            search_query = f"\"{search_query}\" == tags"
-        results = apiclient.search(search_query)
-        if results is not None:
-            for types, documents in results.items():
-                if types == "ports":
-                    cls = PortView
-                elif types == "defects":
-                    cls = DefectView
-                elif types == "commands":
-                    cls = CommandView
-                elif types == "waves":
-                    cls = WaveView
-                elif types == "scopes":
-                    cls = ScopeView
-                elif types == "ips":
-                    cls = IpView
-                elif types == "tools":
-                    cls = ToolView
-                else:
-                    print_error("The given type is invalid : "+str(types))
-                    return
-                cls.print_info(documents)
+    
 
     @command
     def upload(self, path, plugin_name):

@@ -208,7 +208,9 @@ class Tool(Element):
             thread.start()
             self.markAsRunning(worker)
         else:
-            apiclient.sendLaunchTask(self.getId(), parser, checks, worker)
+            res = apiclient.sendLaunchTask(self.getId(), parser, checks, worker)
+            if res:
+                print_formatted("Task started.", "success")
     
 
     def update(self, pipeline_set=None):

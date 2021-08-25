@@ -15,7 +15,7 @@ import webbrowser
 from prompt_toolkit import ANSI
 name = "Port" # Used in command decorator
 
-def validatePort(value):
+def validatePort(value, field):
     return value >= 0 and value <= 65535
 
 @cls_commands   
@@ -61,6 +61,9 @@ class PortView(ViewElement):
     def print_info(cls, ports):
         if ports:
             table_data = [['Port', 'Service', "Product", 'Tools : waiting', 'running', 'done', 'Defects']]
+            alignements = ["left"]*len(table_data[0])
+            for i in range(3, len(alignements)):
+                alignements[i] = "right"
             for port in ports:
                 if isinstance(port, dict):
                     port = Port(port)
@@ -72,9 +75,9 @@ class PortView(ViewElement):
                 not_done = 0
                 for tool in tools:
                     tool_m = Tool(tool)
-                    if tool_m.getStatus() == "done":
+                    if "done" in tool_m.getStatus():
                         done += 1
-                    elif tool_m.getStatus() == "running":
+                    elif "running" in tool_m.getStatus():
                         running += 1
                     else:
                         not_done += 1
@@ -82,7 +85,7 @@ class PortView(ViewElement):
                 port_str = ViewElement.colorWithTags(port.getTags(), port.getDetailedString())
                 table_data.append([port_str, port.service, port.product, str(not_done), str(running), str(done), len(defects)])
             table = AsciiTable(table_data)
-            table = style_table(table)
+            table = style_table(table, alignements=alignements)
             print_formatted_text(ANSI(table.table+"\n"))
         else:
             #No case

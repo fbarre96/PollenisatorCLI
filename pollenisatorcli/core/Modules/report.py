@@ -194,12 +194,14 @@ class Report(FormModule):
         self.mainRedac = main_redac_name
     
     @command
-    def edit(self, defect_id):
+    def edit(self, defect_id, *args):
         """Usage: edit <defect_id>
         Description : edit the defect 
         Args:
             defect_id : the defect id to edit
         """
+        if len(args) >= 1:
+            defect_id += " "+(" ".join(args))
         defect_o =self.getDefectWithId(defect_id)
         self.set_context(DefectView(DefectController(defect_o), self, self.prompt_session))
 
@@ -291,19 +293,22 @@ class Report(FormModule):
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
         """Returns a list of valid options for the given cmd
         """  
-        apiclient = APIClient.getInstance()
         ret = super().getOptionsForCmd(cmd, cmd_args, complete_event)
         if ret:
             return ret
         if cmd == "download":
-            return self.docx_models + self.pptx_models
+            if len(cmd_args) == 1:
+                return self.docx_models + self.pptx_models
         elif cmd == "generate":
-            return ["word", "powerpoint"]
+            if len(cmd_args) == 1:
+                return ["word", "powerpoint"]
         elif cmd in ["edit", "move", "remove"]:
-            return [str(x) for x in range(1, len(self.defects_ordered)+1)]
+            if len(cmd_args) == 1:
+                return [str(x) for x in range(1, len(self.defects_ordered)+1)]
         elif cmd == "setMainRedactor":
-            settings = Settings()
-            settings._reloadDbSettings()
-            pentesters = settings.getPentesters()
-            return pentesters
+            if len(cmd_args) == 1:
+                settings = Settings()
+                settings._reloadDbSettings()
+                pentesters = settings.getPentesters()
+                return pentesters
         return []   

@@ -98,6 +98,17 @@ List of available commands :"""
     def print_help_footer(self):
         print_formatted("For more information about any commands hit :")
         print_formatted("help <command>", "cmd")
+        
+    @command
+    def help(self, command_help=""):
+        # Global help
+        res = self.getCommandHelp(command_help)
+        if res is not None:
+            print_formatted(res)
+            return
+        self.print_command_help()
+        self.print_help_footer()
+    
 
     def takeCommands(self, apiclient):
         APIClient.setInstance(apiclient)

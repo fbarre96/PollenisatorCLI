@@ -39,10 +39,10 @@ class CommandGroupView(ViewElement):
             #No case
             pass
 
-    def validatorCommand(self, value):
+    def validatorCommand(self, value, field):
         return "" if  value in Command.getList() else f"{value} is not an existing command"
     
-    def getCommandList(self, args):
+    def getCommandList(self, args, _cmd):
         ret = []
         command_list = list(Command.getList())
         list_args = args[-1].split(",")

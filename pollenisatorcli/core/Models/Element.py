@@ -117,7 +117,7 @@ class Element(object):
         """
         # pass
 
-    def getTags(self):
+    def getTags(self, _cmd=""):
         """Returns the tag list assigned to this element.
         Returns:
             list of string

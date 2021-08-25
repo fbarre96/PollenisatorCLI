@@ -51,7 +51,7 @@ class CommandView(ViewElement):
             #No case
             pass
 
-    def validatePentestType(self, value):
+    def validatePentestType(self, value, field):
         pentest_types = Settings.getPentestTypes().keys()
         if value.strip() not in pentest_types:
             return f"{value} is not a validate pentest type, edit settings or choose an existing one ({', '.join(pentest_types)})."
@@ -59,7 +59,7 @@ class CommandView(ViewElement):
 
     
 
-    def getPentestTypes(self, args):
+    def getPentestTypes(self, args, _cmd):
         ret = []
         pentest_types = list(Settings.getPentestTypes().keys())
         for pentest_type in pentest_types:

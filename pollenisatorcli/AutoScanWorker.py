@@ -65,7 +65,6 @@ def executeCommand(apiclient, toolId, parser="", local=True, allowAnyCommand=Fal
     else:
         success, comm, fileext, bin_path_server = apiclient.getCommandline(toolId, parser)
     if not success:
-        print(str(comm))
         toolModel.setStatus(["error"])
         return False, str(comm)
         
@@ -109,6 +108,7 @@ def executeCommand(apiclient, toolId, parser="", local=True, allowAnyCommand=Fal
         return False, str(e)
     # Execute found plugin if there is one
     outputfile = outputDir+fileext
+    print_formatted("Uploading f{outputfile} tool result ...")
     msg = apiclient.importToolResult(toolId, parser, outputfile)
     if msg != "Success":
         #toolModel.markAsNotDone()
@@ -123,7 +123,7 @@ def executeCommand(apiclient, toolId, parser="", local=True, allowAnyCommand=Fal
                 str(float(command_o.get("sleep_between", 0)))+")"
         print_formatted_text(msg)
         time.sleep(float(command_o.get("sleep_between", 0)))
-    return True, outputfile
+    return True, os.path.normpath(outputfile)
     
 def getWaveTimeLimit(waveName):
     """

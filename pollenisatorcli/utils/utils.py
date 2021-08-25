@@ -92,6 +92,9 @@ def getConfigFolder():
     config = os.path.join(home,".config/pollenisatorcli/")
     return config
 
+def getExportDir():
+    export_dir = os.path.normpath(os.path.join(getMainDir(), "exports"))
+    return export_dir
 
 def getClientConfigFilePath():
     config = os.path.normpath(os.path.join(getConfigFolder(), "client.cfg"))
@@ -243,7 +246,7 @@ def loadToolsConfig():
         Return the json converted values of the config file.
     """
     tool_config_folder = os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), "../../config/tools.d/")
+        os.path.realpath(__file__)), "../config/tools.d/")
     default_tools_config = os.path.join(tool_config_folder, "tools.json")
     default_tools_infos = None
     try:

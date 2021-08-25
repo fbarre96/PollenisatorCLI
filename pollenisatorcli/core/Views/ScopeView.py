@@ -12,7 +12,7 @@ from pollenisatorcli.utils.utils import isNetworkIp, isIp, isDomain
 from pollenisatorcli.utils.utils import command, cls_commands
 name = "Scope" # Used in command decorator
 
-def validateScope(value):
+def validateScope(value, field):
         true_value = value.strip()
         if isNetworkIp(true_value) or isIp(true_value):
             return ""
@@ -67,9 +67,9 @@ class ScopeView(ViewElement):
                 not_done = 0
                 for tool in tools:
                     tool_m = Tool(tool)
-                    if tool_m.getStatus() == "done":
+                    if "done" in tool_m.getStatus():
                         done += 1
-                    elif tool_m.getStatus() == "running":
+                    elif "running" in tool_m.getStatus():
                         running += 1
                     else:
                         not_done += 1

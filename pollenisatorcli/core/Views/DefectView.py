@@ -31,15 +31,15 @@ class DefectView(ViewElement):
             ComboParameter("ease",  DefectController.getEases(), default=self.controller.model.ease, required=True, helper="ease of exploitation: \n0: Trivial to exploit, no tool required\n1: Simple technics and public tools needed to exploit\n2: public vulnerability exploit requiring security skills and/or the development of simple tools.\n3: Use of non-public exploits requiring strong skills in security and/or the development of targeted tools"),
             ComboParameter("impact",  DefectController.getImpacts(), default=self.controller.model.impact, required=True, helper="0: No direct impact on system security\n1: Impact isolated on precise locations of pentested system security\n2: Impact restricted to a part of the system security.\n3: Global impact on the pentested system security."),
             ComboParameter("risk",  DefectController.getRisks(), default=self.controller.model.risk, required=False, helper="0: small risk that might be fixed\n1: moderate risk that need a planed fix\n2: major risk that need to be fixed quickly.\n3: critical risk that need an immediate fix or an immediate interruption."),
-            ListParameter("types", default=self.controller.model.mtype, validator=lambda value: "" if value in defect_types else "Not a valid type", completor=lambda args: defect_types),
+            ListParameter("types", default=self.controller.model.mtype, validator=lambda value, field: "" if value in defect_types else "Not a valid type", completor=lambda args: defect_types),
             Parameter("notes", default=self.controller.model.notes, helper="A space to take notes. Will appear in word report"),
             ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
 
         ]
         if self.controller.model.isAssigned():
-            self.fields.append(ComboParameter("redactor",  settings.getPentesters()+["N/A"], default=self.controller.model.risk.redactor, required=False, helper="Assign a pentester to redact this defect."))
+            self.fields.append(ComboParameter("redactor",  settings.getPentesters()+["N/A"], default=self.controller.model.redactor, required=False, helper="Assign a pentester to redact this defect."))
 
-    def getDefectsTitle(self, args):
+    def getDefectsTitle(self, args, _cmd):
         if not args:
             return []
         value = " ".join(args)
@@ -95,7 +95,7 @@ class DefectView(ViewElement):
                     defect = defect.model
                 title_str = ViewElement.colorWithTags(defect.getTags(), defect.getDetailedString())
                 risks_colors = {"Critical":"autoblack", "Major":"autored", "Important":"automagenta", "Minor":"autoyellow", "":"autowhite"}
-                risk_str = Color("{"+risks_colors[defect.risk]+"}"+defect.risk+"{/"+risks_colors[defect.risk]+"}")
+                risk_str = Color("{"+risks_colors.get(defect.risk, "autowhite")+"}"+defect.risk+"{/"+risks_colors.get(defect.risk,"autowhite")+"}")
                 table_data.append([title_str, risk_str])
             table = AsciiTable(table_data)
             table = style_table(table)

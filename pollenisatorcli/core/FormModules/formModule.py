@@ -91,7 +91,7 @@ class FormModule(Module):
             else: # param value to complete
                 for field in self.fields:
                     if cmd_args[0].lower() == field.name.lower():
-                        return field.getPossibleValues(cmd_args[1:])
+                        return field.getPossibleValues(cmd_args[1:], cmd_args[0])
         elif cmd == "unset":
             if len(cmd_args) <= 1: # param name to complete
                 return [x.name for x in self.fields]

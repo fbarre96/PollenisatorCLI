@@ -98,12 +98,13 @@ class ViewElement(FormModule):
         super().show()
         
 
-    def validateTag(self, value):
+    def validateTag(self, value, field):
         tag_list = Settings.getTags().keys()
         if value.strip() not in tag_list:
             return f"{value} is not a validate tag, edit settings or choose an existing one ({', '.join(tag_list)})."
         return ""
-    def getTags(self, args):
+
+    def getTags(self, args, _cmd=""):
         ret = []
         tag_list = list(Settings.getTags().keys())
         for tag in tag_list:
@@ -135,13 +136,28 @@ class ViewElement(FormModule):
         from pollenisatorcli.core.Modules.ToolModule import ToolModule
         if "tools" in self.__class__.children_object_types:
             tools = [tool for tool in self.__class__.children_object_types["tools"]["model"].fetchObjects(self.controller.model.getDbKey())]
-            self.set_context(ToolModule(self.controller.model.getDetailedString()+" Tools", self, self.prompt_session, tools))
+            self.set_context(ToolModule(self.controller.model.getDetailedString(), self, self.prompt_session, tools))
         else:
             print_error("This context cannot have tools attached to it")
 
+    @command
+    def recap(self, status="all"):
+        """Usage: recap ["done"|"error"|"running"|"ready"|"all"]
+        Args:
+            status: recap only the tools with the given status. If not set, all will be done
+            
+        Description: print info about each tools.
+        """
+        from pollenisatorcli.core.Modules.ToolModule import ToolModule
+        if "tools" in self.__class__.children_object_types:
+            tools = [tool for tool in self.__class__.children_object_types["tools"]["model"].fetchObjects(self.controller.model.getDbKey())]
+            ToolModule(self.controller.model.getDetailedString()+" Tools", self, self.prompt_session, tools).recap(status)
+        else:
+            print_error("This context does not have tools attached to it")
+
     
     @command
-    def edit(self, object_title):
+    def edit(self, object_title, *args):
         """Usage: edit <object_title>
 
         Description: edit object module:
@@ -149,6 +165,8 @@ class ViewElement(FormModule):
         Arguments:
             object_title: a string to identify an object.
         """
+        if len(args) >= 1:
+            object_title += " "+(" ".join(args))
         # will swap context to edit an object and access it's subobjects
         cls, objects_matching = self.identifyPentestObjectsFromString(object_title)
         if cls is not None:
@@ -212,3 +230,5 @@ class ViewElement(FormModule):
             objects = self.__class__.children_object_types[children_type]["model"].fetchObjects(self.controller.model.getDbKey())
             ret += [str(x) for x in objects]
         return ret
+    
+    

@@ -260,6 +260,15 @@ class APIClient():
             return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
         else:
             return None
+    
+    def bulkDelete(self, dictToDelete):
+        api_url = '{0}delete/{1}/bulk'.format(self.api_url_base, self.getCurrentPentest())
+        data = dictToDelete
+        response = requests.post(api_url, headers=self.headers, data=json.dumps(data, cls=JSONEncoder), verify=False, proxies=proxies)
+        if response.status_code == 200:
+            return json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+        else:
+            return None
 
     def aggregate(self, collection, pipelines=None):
         pipelines = [] if pipelines is None else pipelines
@@ -410,6 +419,10 @@ class APIClient():
         """
         api_url = '{0}files/{1}/download/{2}/{3}/{4}'.format(self.api_url_base, self.getCurrentPentest(), filetype, attached_iid, filename)
         response = requests.get(api_url, headers=self.headers, proxies=proxies, verify=False)
+        try:
+            os.makedirs(os.path.dirname(local_path))
+        except:
+            pass
         if response.status_code == 200:
             with open(local_path, 'wb') as f:
                 f.write(response.content)

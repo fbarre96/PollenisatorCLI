@@ -120,7 +120,7 @@ class Scans(GlobalModule):
                 apiclient.sendStopAutoScan()
 
     @command
-    def edit(self, workername):
+    def edit(self, workername, *args):
         """Usage: edit <workername>
 
         Description: Edit configuration of a worker
@@ -128,6 +128,8 @@ class Scans(GlobalModule):
         Args:
             workername: the worker name to edit
         """
+        if len(args) >= 1:
+            workername += " "+(" ".join(args))
         apiclient = APIClient.getInstance()
         workers = apiclient.getWorkers()
         if not workers:
@@ -200,5 +202,6 @@ def start_docker(force_reinstall):
     container = client.containers.run(image=image[0], network_mode=network_mode, volumes={os.path.join(getMainDir(), "PollenisatorWorker"):{'bind':'/home/Pollenisator', 'mode':'rw'}}, detach=True)
     print_formatted("Checking if worker is running")
     print_formatted(container.id)
+    print_formatted("Worker is running. Use command 'set_inclusion <tab>' to activate it on this pentest.")
     if container.logs() != b"":
         print_error(container.logs())

@@ -32,7 +32,7 @@ class WaveView(ViewElement):
         ]
 
     @command
-    def edit(self, object_title):
+    def edit(self, object_title, *args):
         """Usage: edit <scope>|interval_<index starting from 1>|<tool name>
 
         Description: edit object module:
@@ -40,6 +40,8 @@ class WaveView(ViewElement):
         Arguments:
             object_title: a string to identify an object.
         """
+        if len(args) >= 1:
+            object_title += " "+(" ".join(args))
         super().edit(object_title)
 
     def identifyPentestObjectsFromString(self, obj_str):
@@ -103,9 +105,9 @@ class WaveView(ViewElement):
                 not_done = 0
                 for tool in tools:
                     tool_m = Tool(tool)
-                    if tool_m.getStatus() == "done":
+                    if "done" in tool_m.getStatus():
                         done += 1
-                    elif tool_m.getStatus() == "running":
+                    elif "running" in tool_m.getStatus():
                         running += 1
                     else:
                         not_done += 1

@@ -82,16 +82,15 @@ class IpView(ViewElement):
 
     
     @classmethod
-    def print_info(cls, ips, level_of_info="all"):
-        
+    def print_info(cls, ips, level_of_info="all", is_aggregated=False):
         if ips:
             if level_of_info == "all":
-                table_data = [['Ip', 'Alias', 'Ports', 'Defects','Tools total', 'Waiting', 'Running', 'Done']]
+                table_data = [['Ip', 'Hostname/Ip', 'Ports', 'Defects','Tools total', 'Waiting', 'Running', 'Done']]
                 alignements = ["left"]*len(table_data[0])
                 for i in range(4,len(alignements)):
                     alignements[i] = "right"
             else:
-                table_data = [['Ip', 'Alias', 'Ports', 'Defects']]
+                table_data = [['Ip', 'Hostname/Ip', 'Ports', 'Defects']]
                 alignements = ["left"]*len(table_data[0])
                 for i in range(2, len(alignements)):
                     alignements[i] = "right"
@@ -99,46 +98,52 @@ class IpView(ViewElement):
             oos_table_data = []
             for ip in ips:
                 if isinstance(ip, dict):
-                    ip = Ip(ip)
-                if isinstance(ip, IpController):
-                    ip = ip.model
-                port_count = ip.getPortCount()
-                hostnames = ip.infos.get("hostname", [])
+                    ip_m = Ip(ip)
+                elif isinstance(ip, IpController):
+                    ip_m = ip.model
+                else:
+                    ip_m = ip
+                port_count = ip_m.getPortCount() if not is_aggregated else len(ip["ports"])
+                hostnames = ip_m.infos.get("hostname", [])
                 hostname_str = ""
                 if hostnames:
-                    hostname_str = ", ".join(hostnames)
-                ip_str = ", ".join(list(ip.infos.get("ip", "")))
+                    if isinstance(hostnames, list):
+                        hostname_str = ", ".join(hostnames)
+                    else:
+                        hostname_str = hostnames
+                
+                ip_str = ", ".join(list(ip_m.infos.get("ip", "")))
                 if ip_str:
                     alias_str = str(ip_str)
                 else:
                     alias_str = hostname_str
-                tools = ip.getTools()
+                tools = ip_m.getTools() if not is_aggregated else ip["tools"]
                 done = 0
                 running = 0
                 not_done = 0
                 for tool in tools:
                     tool_m = Tool(tool)
-                    if tool_m.getStatus() == "done":
+                    if "done" in tool_m.getStatus():
                         done += 1
-                    elif tool_m.getStatus() == "running":
+                    elif "running" in tool_m.getStatus():
                         running += 1
                     else:
                         not_done += 1
-                ports = ip.getPorts()
+                ports = ip_m.getPorts() if not is_aggregated else ip["ports"]
                 strs_ports = []
                 for port in ports:
                     port_m = Port(port)
                     strs_ports.append(f"{port_m.port}/{port_m.proto}:{port_m.service}" if port_m.proto != "tcp" else f"{port_m.port}:{port_m.service}")
-                ip_str = ip.ip
-                if not ip.in_scopes:
+                ip_str = ip_m.ip
+                if not ip_m.in_scopes:
                     ip_str = Color("{autoblack}"+ip_str+"{/autoblack}")
                 else:
-                    ip_str = ViewElement.colorWithTags(ip.getTags(), ip.ip)
-                defect_count = ip.getDefectCount()
+                    ip_str = ViewElement.colorWithTags(ip_m.getTags(), ip_m.ip)
+                defect_count = ip_m.getDefectCount() if not is_aggregated else len(ip["defects"])
                 strs_ports = ", ".join(strs_ports)
                 if strs_ports.strip() == "":
                     strs_ports = "-"
-                if len(ip.in_scopes) > 0: # out of scopes ip will be appended after
+                if len(ip_m.in_scopes) > 0: # out of scopes ip will be appended after
                     if level_of_info == "all":
                         table_data.append([ip_str, alias_str, strs_ports, str(defect_count), str(not_done+running+done), str(not_done), str(running), str(done)])
                     else:

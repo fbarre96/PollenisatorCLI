@@ -18,7 +18,7 @@ class Parameter:
 
     def isWritable(self):
         return not self.readonly
-        
+
     def getValue(self):
         return str(self)
     
@@ -28,7 +28,7 @@ class Parameter:
     def setValue(self, value):
         if self.readonly:
             return "This is a readonly parameter"
-        msg = self.validator(value)
+        msg = self.validator(value, self)
         if msg == "":
             self.value = value
         return msg
@@ -46,18 +46,18 @@ class Parameter:
             return ""
         return str(self.value)
 
-    def defaultValidator(self, value):
+    def defaultValidator(self, value, field):
         return ""
     
     def getHelp(self):
         return self.help
 
-    def getPossibleValues(self, args):
+    def getPossibleValues(self, args, command):
         if self.completor is None:
             return []
         if args is None:
             args = []
-        return self.completor(args)
+        return self.completor(args, command)
 
     @classmethod
     def getParametersValues(cls, parameters):
@@ -121,14 +121,16 @@ class DateParameter(Parameter):
 class ListParameter(Parameter):
     def __init__(self, *args, **kwargs):
         keywords_args = kwargs
-        self.elem_validator = keywords_args.get("validator", lambda args:  "")
+        self.elem_validator = keywords_args.get("validator", lambda args, field: "")
         keywords_args["validator"] = self.validateList
         super().__init__(*args, **keywords_args)
-    
-    def validateList(self, args):
+
+    def validateList(self, args, field):
+        if args.endswith(","):
+            args = args[:-1]
         values = args.split(",")
         for value in values:
-            msg = self.elem_validator(value)
+            msg = self.elem_validator(value, field)
             if msg != "":
                 return msg
         # Check duplicates
@@ -154,7 +156,7 @@ class ListParameter(Parameter):
     def setValue(self, value):
         if self.readonly:
             return "This is a readonly parameter"
-        msg = self.validateList(value)
+        msg = self.validateList(value, self)
         if msg == "":
             self.value = value.split(",")
         return msg
@@ -193,7 +195,7 @@ class TableParameter(Parameter):
         keywords_args["validator"] = self.validateTable
         super().__init__(name, *args, **keywords_args)
     
-    def validateTable(self, args):
+    def validateTable(self, args, field):
         return ""
 
     def getStrValue(self):

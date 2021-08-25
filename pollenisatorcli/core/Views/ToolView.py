@@ -13,8 +13,7 @@ from pollenisatorcli.core.Parameters.parameter import Parameter, DateParameter, 
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted_text, print_formatted, execute, style_table
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.shortcuts import ProgressBar
-from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import ProgressBar, confirm
 import os
 from shutil import which
 import webbrowser
@@ -83,7 +82,7 @@ class ToolView(ViewElement):
             if local == "local":
                 self.localLaunchCallback()
             else:
-                self.safeLaunchCallback()
+                self.launchCallback()
 
 
     def safeLaunchCallback(self, _event=None):
@@ -109,12 +108,15 @@ class ToolView(ViewElement):
         if not res:
             msg = FormattedText([("class:warning", "WARNING : Safe queue failed"), ("class:normal", f" This tool cannot be launched because no worker add space for its thread.\nDo you want to launch it anyway?")])
             print_formatted_text(msg)
-            result = prompt('yes/no? ')
-            if result.lower() == "yes":
+            result = confirm()
+            if result:
                 apiclient = APIClient.getInstance()
-                apiclient.sendLaunchTask(self.controller.model.getId())
+                res = apiclient.sendLaunchTask(self.controller.model.getId())
+                if res is not None:
+                    print_formatted("Task started.", "success")
         else:
             self.updatePrompt()
+            print_formatted("Task started.", "success")
     
     def localLaunchCallback(self):
         """
@@ -134,7 +136,7 @@ class ToolView(ViewElement):
         """
         status = self.controller.getStatus()
         if "done" in status:
-            self.controller.markAsNotDone()
+            self.controller.model.markAsNotDone()
             self.updatePrompt()
         else:
             print_error("This tool is not done, it cannot be reset")
@@ -152,9 +154,7 @@ class ToolView(ViewElement):
             success = apiclient.sendStopTask(self.controller.model.getId())
             delete_anyway = False
             if success == False:
-                print_error("Stop failed. This tool cannot be stopped because its trace has been lost (The application has been restarted and the tool is still not finished).\nReset tool anyway?")
-                delete_anyway = prompt("yes/no?")
-                delete_anyway = delete_anyway.lower() == "yes"
+                delete_anyway = confirm("Stop failed. This tool cannot be stopped because its trace has been lost (The application has been restarted and the tool is still not finished).\nReset tool anyway?")
             if delete_anyway:
                 success = apiclient.sendStopTask(self.controller.model.getId(), True)
             if success:
@@ -172,6 +172,7 @@ class ToolView(ViewElement):
         outputDir = os.path.join(abs_path, "../../results")
         apiclient = APIClient.getInstance()
         path = self.controller.getOutputDir(apiclient.getCurrentPentest())
+        
         with ProgressBar() as pb:
             for i in pb(range(1)):
                 path = apiclient.getResult(self.controller.getDbId(), os.path.join(outputDir,path, str(self.controller.model)))
@@ -179,10 +180,9 @@ class ToolView(ViewElement):
         if path is not None:
             if os.path.isfile(path):
                 if which("xdg-open") is not None:
-                    print_formatted("Download completed : Would you like to open it?")
-                    answer = prompt("yes/no? ")
-                    if answer.lower() == "yes":
-                        execute("xdg-open "+path)
+                    answer = confirm("Download completed. Open It ?")
+                    if answer:
+                        os.system("xdg-open "+path)
                         return
                     else:
                         return
@@ -215,7 +215,7 @@ class ToolView(ViewElement):
                 if status:
                     status = status[0]
                 else:
-                    status = ""
+                    status = "ready"
                 status_color = status_colors.get(status, None)
                 if status_color is not None:
                     status_str = Color("{"+status_colors[status]+"}"+status+"{/"+status_colors[status]+"}")
