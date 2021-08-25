@@ -527,8 +527,8 @@ class APIClient():
         response = requests.get(api_url, headers=self.headers, params={"collection":collection}, proxies=proxies, verify=False)
         if response.status_code == 200:
             dir_path = os.path.dirname(os.path.realpath(__file__))
-            out_path = os.path.join(
-                dir_path, "../exports/", pentest if collection == "" else pentest+"_"+collection)+".gz"
+            out_path = os.path.normpath(os.path.join(
+                dir_path, "../exports/", pentest if collection == "" else pentest+"_"+collection)+".gz")
             with open(out_path, 'wb') as f:
                 f.write(response.content)
                 return True, out_path

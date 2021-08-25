@@ -231,9 +231,11 @@ class Pollenisator(GlobalModule):
         """
         apiclient = APIClient.getInstance()
         if pentest_or_command == "pentest":
+            
             if pentest_name is None:
                 print_error("pentest was specified but no pentest name was given.")
                 return            
+            apiclient.setCurrentPentest(pentest_name)
             success, msg = apiclient.dumpDb(pentest_name)
             if not success:
                 print_error(msg)
