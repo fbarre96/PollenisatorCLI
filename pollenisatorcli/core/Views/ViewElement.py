@@ -198,7 +198,7 @@ class ViewElement(FormModule):
         return []
 
     @command
-    def insert(self, object_type):
+    def insert(self, object_type, *args):
         """Usage: insert <child_object_type>
 
         Description: create a new child object in database

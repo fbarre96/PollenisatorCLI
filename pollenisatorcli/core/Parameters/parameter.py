@@ -72,7 +72,8 @@ class BoolParameter(Parameter):
         keywords_args["validator"] = self.validateBool
         keywords_args["completor"] = lambda args: ["true", "false"]
         super().__init__(*args, **keywords_args)
-    def validateBool(self, value):
+
+    def validateBool(self, value, _field):
         return "" if value.lower() in ["true", "false"] else f"{value} is not a valid value. Expected format is 'true' or 'false'"
 
     def getValue(self):
@@ -85,7 +86,11 @@ class IntParameter(Parameter):
         super().__init__(*args, **keywords_args)
     
 
-    def validateInt(self, value):
+    def validateInt(self, value, _field):
+        if value is None and value.required:
+            return f"{self.name} is required to be a number and is not set."
+        if value is None:
+            return ""
         try:
             conversion = int(value)
         except ValueError:
@@ -93,9 +98,11 @@ class IntParameter(Parameter):
         return ""
     
     def getValue(self):
+        if self.value is None:
+            return None
         return int(self.value)
 
-def validateDate(value):
+def validateDate(value, _field):
     res = stringToDate(value)
     if res is None:
         return f"{value} is not a valide date. Expected format is 'dd/mm/YYYY hh:mm:ss'"

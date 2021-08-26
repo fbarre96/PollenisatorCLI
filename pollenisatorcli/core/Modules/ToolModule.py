@@ -22,9 +22,8 @@ class ToolModule(GlobalModule):
         refreshed = []
         for tool in self.tools:
             if toolname == "all" or toolname == tool.name:
-                res = Tool.fetchObject({"name":tool.name})
-                if res is not None:
-                    refreshed.append(res)
+                tool = Tool.fetchObject(tool.getDbKey())
+                refreshed.append(tool)
             else:
                 refreshed.append(tool)
             

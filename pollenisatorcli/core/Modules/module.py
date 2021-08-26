@@ -14,7 +14,7 @@ from pollenisatorcli.AutoScanWorker import executeCommand
 
 from multiprocessing.connection import Listener
 
-name = "Module" # Used in command decorator
+name = "Global" # Used in command decorator (Tricks command help to show itself as in Global Module)
 
 
 

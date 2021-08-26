@@ -53,7 +53,7 @@ class Wave(Element):
         Also delete the tools, intervals, scopes associated with this wave
         """
         apiclient = APIClient.getInstance()
-        apiclient.delete("waves", ObjectId(self._id))
+        return apiclient.delete("waves", ObjectId(self._id))
 
     def addInDb(self):
         """

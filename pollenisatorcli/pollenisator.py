@@ -36,7 +36,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.core.FormModules.newPentestForm import NewPentestForm
 from pollenisatorcli.core.FormModules.settingsForms import PollenisatorSettings
-from pollenisatorcli.core.Modules.GlobalModule import GlobalModule
+from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.Modules.pentest import Pentest
 from pollenisatorcli.core.Modules.commandtemplate import CommandTemplate
 from pollenisatorcli.utils.completer import IMCompleter
@@ -50,7 +50,7 @@ from multiprocessing.connection import Client
 name = "Pollenisator dbs"
 
 @cls_commands
-class Pollenisator(GlobalModule):
+class Pollenisator(Module):
     def __init__(self):
         args = docopt(__doc__, version=version)
         client_config = loadClientConfig()

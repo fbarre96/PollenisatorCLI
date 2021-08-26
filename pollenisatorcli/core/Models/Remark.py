@@ -46,7 +46,7 @@ class Remark(Element):
         """
         ret = self._id
         apiclient = APIClient.getInstance()
-        apiclient.deleteFromDb(apiclient.getCurrentPentest(),"remarks", {"_id": ObjectId(ret)})
+        return apiclient.deleteFromDb(apiclient.getCurrentPentest(),"remarks", {"_id": ObjectId(ret)})
 
     def addInDb(self):
         """

@@ -63,7 +63,7 @@ class Port(Element):
         """
         apiclient = APIClient.getInstance()
         
-        apiclient.delete("ports", ObjectId(self._id))
+        return apiclient.delete("ports", ObjectId(self._id))
 
     def update(self, pipeline_set=None):
         """Update this object in database.

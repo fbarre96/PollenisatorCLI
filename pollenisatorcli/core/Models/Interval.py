@@ -51,7 +51,7 @@ class Interval(Element):
         Delete the Interval represented by this model in database.
         """
         apiclient = APIClient.getInstance()
-        apiclient.delete(
+        return apiclient.delete(
             "intervals", {"_id": self._id})
         
 

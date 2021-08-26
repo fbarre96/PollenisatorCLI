@@ -93,7 +93,7 @@ class Defect(Element):
         """
         ret = self._id
         apiclient = APIClient.getInstance()
-        apiclient.delete("defects", ret)
+        return apiclient.delete("defects", ret)
 
     def addInDb(self):
         """

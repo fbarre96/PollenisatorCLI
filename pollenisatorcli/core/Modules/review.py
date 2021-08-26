@@ -11,6 +11,13 @@ from pollenisatorcli.core.Views.IpView import IpView
 from pollenisatorcli.core.Views.PortView import PortView
 from pollenisatorcli.core.Views.DefectView import DefectView
 from pollenisatorcli.core.Views.ToolView import ToolView
+from pollenisatorcli.core.Models.Command import Command
+from pollenisatorcli.core.Models.Wave import Wave
+from pollenisatorcli.core.Models.Scope import Scope
+from pollenisatorcli.core.Models.Ip import Ip
+from pollenisatorcli.core.Models.Port import Port
+from pollenisatorcli.core.Models.Defect import Defect
+from pollenisatorcli.core.Models.Tool import Tool
 name = "Review" # Used in command decorator
 
 @cls_commands
@@ -69,6 +76,13 @@ class ReviewModule(Module):
         self.current.addTag(tag_name)
         self.next()
 
+    @command
+    def show(self):
+        """Usage: show
+        Description: Print more info about current item"""
+        view = getView(self.current)
+        view.print_info(self.current)
+
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
         """Returns a list of valid options for the given cmd
         """  
@@ -79,3 +93,22 @@ class ReviewModule(Module):
                 tags = settings.getTags()
                 return tags
         return []
+
+def getView(model):
+    if isinstance(model, Port):
+        cls = PortView
+    elif isinstance(model, Defect):
+        cls = DefectView
+    elif isinstance(model, Command):
+        cls = CommandView
+    elif isinstance(model, Wave):
+        cls = WaveView
+    elif isinstance(model, Scope):
+        cls = ScopeView
+    elif isinstance(model, Ip):
+        cls = IpView
+    elif isinstance(model, Tool):
+        cls = ToolView
+    else:
+        raise TypeError("The given type is invalid : "+str(types))
+    return cls

@@ -20,9 +20,7 @@ import os
 from shutil import which
 import subprocess
 from multiprocessing import Process
-
 name = "Global"
-
 
 @cls_commands
 class GlobalModule(Module):
@@ -44,9 +42,20 @@ class GlobalModule(Module):
         Description : open the scan module
         """
         from pollenisatorcli.core.Modules.scans import Scans
-
         if APIClient.getInstance().getCurrentPentest() is not None:
             self.set_context(Scans(self, self.prompt_session))
+        else:
+            print_error("Use open to connect to a database first")
+
+    @command
+    def scripts(self):
+        """Usage: scans
+        Description : open the scan module
+        """
+        from pollenisatorcli.core.Modules.scripts import ScriptsModule
+
+        if APIClient.getInstance().getCurrentPentest() is not None:
+            self.set_context(ScriptsModule(self, self.prompt_session))
         else:
             print_error("Use open to connect to a database first")
 

@@ -16,7 +16,13 @@ from prompt_toolkit import ANSI
 name = "Port" # Used in command decorator
 
 def validatePort(value, field):
-    return value >= 0 and value <= 65535
+    try:
+        value = int(value)
+    except ValueError:
+        return "Port number is not a integer"
+    if not(value >= 0 and value <= 65535):
+        return f"{value} is not a valid port number"
+    return ""
 
 @cls_commands   
 class PortView(ViewElement):
@@ -27,7 +33,7 @@ class PortView(ViewElement):
         super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = [
             ComboParameter("ip", Ip.fetchObjects({}),readonly=self.controller.model.ip != "", required=True, default=self.controller.model.ip, helper="the ip this port is opened on"),
-            IntParameter("port", readonly=self.controller.model.port != "", required=True,  validator=validatePort, default=self.controller.model.port, helper="Open port number"),
+            Parameter("port", readonly=self.controller.model.port != "", required=True,  validator=validatePort, default=self.controller.model.port, helper="Open port number"),
             ComboParameter("proto", ["tcp","udp"], default="tcp", required=True, helper="IP transport protocol contacting this port", readonly=self.controller.model.proto != ""),
             Parameter("service",default=self.controller.model.service, helper="Service running detected on this port by a tool (nmap by default)"),    
             Parameter("product",default=self.controller.model.product, helper="Product name running detected on this port by a tool (nmap by default)"),    
@@ -45,12 +51,13 @@ class PortView(ViewElement):
             parent_db_key["title"] = obj_str
             if defect_found is not None:
                 return DefectView, [DefectController(defect_found)]
-            else:
-                return None, []
         except ValueError:
             pass
         # Tool test
-        parent_db_key["name"] = obj_str
+        parent_db_key = self.controller.getDbKey()
+        wave, name = obj_str.split("-")
+        parent_db_key["name"] = name
+        parent_db_key["wave"] = wave
         tool_found = Tool.fetchObject(parent_db_key)
         if tool_found is not None:
             return ToolView, [ToolController(tool_found)]

@@ -96,7 +96,7 @@ class Tool(Element):
         Delete the tool represented by this model in database.
         """
         apiclient = APIClient.getInstance()
-        apiclient.delete("tools", ObjectId(self._id))
+        return apiclient.delete("tools", ObjectId(self._id))
 
     def addInDb(self):
         """

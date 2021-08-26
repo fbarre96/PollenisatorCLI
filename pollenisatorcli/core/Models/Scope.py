@@ -68,7 +68,7 @@ class Scope(Element):
         """
         # deleting tool with scope lvl
         apiclient = APIClient.getInstance()
-        apiclient.delete("scopes", ObjectId(self._id))
+        return apiclient.delete("scopes", ObjectId(self._id))
         # Finally delete the selected element
 
     def addInDb(self):
