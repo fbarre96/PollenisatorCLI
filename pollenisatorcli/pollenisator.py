@@ -38,6 +38,7 @@ from pollenisatorcli.core.FormModules.newPentestForm import NewPentestForm
 from pollenisatorcli.core.FormModules.settingsForms import PollenisatorSettings
 from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.Modules.pentest import Pentest
+from pollenisatorcli.core.Modules.admin import Admin
 from pollenisatorcli.core.Modules.commandtemplate import CommandTemplate
 from pollenisatorcli.utils.completer import IMCompleter
 from pollenisatorcli.utils.utils import (CmdError, cls_commands, command,
@@ -290,8 +291,32 @@ class Pollenisator(Module):
             print_error("Pentest database import failed")
         else:
             print_formatted("Pentest database import completed", "valid")
+    
+    @command
+    def admin(self):
+        """Usage: admin
+        Description: Open the admin module to handle users"""
+        self.set_context(Admin(self, self.prompt_session))
 
+    @command
+    def change_password(self):
+        """Usage: change_password
+        Description: Ask current user to change its password"""
+        apiclient = APIClient.getInstance()
+        old = prompt("Old password > ", is_password=True)
+        new = prompt("New password > ", is_password=True)
+        conf = prompt("Confirm new password > ", is_password=True)
+        if conf != new:
+            print_error("New password and confirmation are different.")
+            return
+        
+        msg = apiclient.changeUserPassword(old, new)
+        if msg != "":
+            print_error(msg)
+        else:
+            print_formatted("Changed password successfully", "success")
 
+            
     def getOptionsForCmd(self, cmd, cmd_args, complete_event):
         """Returns a list of valid options for the given cmd
         """  

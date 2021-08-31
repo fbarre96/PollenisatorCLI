@@ -6,7 +6,7 @@ from prompt_toolkit import ANSI
 from terminaltables import AsciiTable
 from colorclass import Color
 from datetime import datetime
-from pollenisatorcli.utils.utils import command, cls_commands, main_help, print_formatted_text, print_formatted, style_table
+from pollenisatorcli.utils.utils import command, cls_commands, main_help, print_formatted_text, print_formatted, style_table, print_error
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.core.Models.Wave import Wave
 from pollenisatorcli.core.Models.Tool import Tool
@@ -38,6 +38,11 @@ class Module:
         return False
     
     def set_context(self, context):
+        if not APIClient.getInstance().isAdmin():
+            if hasattr(context, "adminonly"):
+                if getattr(context, "adminonly", False):
+                    print_error("This context is only for admins")
+                    return
         self.prompt_session.message = context.prompt
         self.prompt_session.completer = context.completer
         self.current_context = context

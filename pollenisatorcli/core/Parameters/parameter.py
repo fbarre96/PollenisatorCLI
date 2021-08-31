@@ -70,7 +70,7 @@ class BoolParameter(Parameter):
     def __init__(self, *args, **kwargs):
         keywords_args = kwargs
         keywords_args["validator"] = self.validateBool
-        keywords_args["completor"] = lambda args: ["true", "false"]
+        keywords_args["completor"] = lambda args, command: ["true", "false"]
         super().__init__(*args, **keywords_args)
 
     def validateBool(self, value, _field):
@@ -117,7 +117,7 @@ class DateParameter(Parameter):
         super().__init__(*args, **keywords_args)
     
     
-    def completeDate(self, args):
+    def completeDate(self, args, cmd):
         today = date.today()
         d1 = dateToString(today)
         return [d1]
@@ -181,7 +181,7 @@ class ComboParameter(Parameter):
     def __init__(self, name, legalValues, *args, **kwargs):
         keywords_args = kwargs
         self.legalValues = legalValues
-        keywords_args["completor"] = lambda args: self.legalValues
+        keywords_args["completor"] = lambda args, field: self.legalValues
         super().__init__(name, *args, **keywords_args)
         
     def setValue(self, new_value):

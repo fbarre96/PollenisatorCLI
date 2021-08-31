@@ -46,7 +46,7 @@ class ParamCompleter(Completer):
             return
         word_before_cursor = document.get_word_before_cursor()
         cmd_args = document.text.split(" ")
-        possibleValues = sorted(self.completor_func(cmd_args))
+        possibleValues = sorted(self.completor_func(cmd_args, cmd_args[0]))
         for possibleValue in possibleValues:
             if possibleValue.startswith(word_before_cursor) and possibleValue != word_before_cursor:
                 yield Completion(possibleValue, -len(word_before_cursor), possibleValue.split(",")[-1])
