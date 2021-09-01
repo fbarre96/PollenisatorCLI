@@ -16,7 +16,7 @@ class ToolModule(GlobalModule):
     def __init__(self, name, parent_context, prompt_session, tools):
         super().__init__(name, parent_context, "Interact and edit with "+name+" tools", FormattedText([('class:title', name),('class:subtitle', ' Tools'),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
         self.tools = tools
-        self.ls()
+        ToolView.print_info([tool for tool in self.tools])
 
     def refreshTools(self, toolname="all"):
         refreshed = []
