@@ -40,12 +40,12 @@ class CommandView(ViewElement):
                 if isinstance(command, CommandController):
                     command = command.model
                 table_data.append([command.name, command.text, str(command.lvl), str(command.priority), str(command.safe), str(command.max_thread)])
-                table = AsciiTable(table_data)
-                table.inner_column_border = False
-                table.inner_footing_row_border = False
-                table.inner_heading_row_border = True
-                table.inner_row_border = True
-                table.outer_border = False
+            table = AsciiTable(table_data)
+            table.inner_column_border = False
+            table.inner_footing_row_border = False
+            table.inner_heading_row_border = True
+            table.inner_row_border = True
+            table.outer_border = False
             print(table.table)
         else:
             #No case

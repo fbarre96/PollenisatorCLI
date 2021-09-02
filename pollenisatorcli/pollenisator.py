@@ -50,6 +50,8 @@ import os
 from multiprocessing.connection import Client
 name = "Pollenisator dbs"
 
+
+
 @cls_commands
 class Pollenisator(Module):
     def __init__(self):
@@ -61,20 +63,12 @@ class Pollenisator(Module):
             client_config["port"] = args["<port>"]
         client_config["https"] = False if args["--http"] else True
         saveCfg(client_config, getClientConfigFilePath())
-        apiclient = APIClient.getInstance()
         self.connected = False
-        if not apiclient.tryConnection(client_config):
-            print_error("Could not connect to server. Look the --host, --port and --http options.")
+        apiclient = APIClient.getInstance()
+        res = apiclient.connect()
+        if not res:
             return
-        rightLogin = False
-        print_formatted("Connecting to "+str(client_config["host"]+":"+str(client_config["port"])))
-        while not rightLogin:
-            login = prompt("Username :", is_password=False)
-            pwd = prompt("Password :", is_password=True)
-            rightLogin = apiclient.login(login, pwd)
-            if not rightLogin:
-                print_error("Invalid username or password")
-
+        self.connected = True
         self.prompt_session = PromptSession(
             "Pollenisator #",
             auto_suggest=AutoSuggestFromHistory(),
@@ -84,7 +78,6 @@ class Pollenisator(Module):
             style=style
         )
         self.prompt_session.path_completer = PathCompleter()
-        self.connected = True
 
         super().__init__("Pollenisator", None, "Main Menu", FormattedText([('class:title', "Pollenisator"),('class:angled_bracket', " > ")]), IMCompleter(self), self.prompt_session)
 
@@ -98,6 +91,9 @@ class Pollenisator(Module):
         
         # Start in main module (this one)
         self.set_context(self)
+
+    
+
         
     def parse_result(self, result):
         if len(result):
