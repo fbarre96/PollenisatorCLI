@@ -43,7 +43,8 @@ class WorkerView(ViewElement):
         for command in allCommands:
             if command not in registeredCommands:
                 not_registered.append(str(command))
-        print_formatted(f"Those commands are not registered by any worker:\n {chr(10).join(not_registered)}","warning")
+        if not_registered:
+            print_formatted(f"Those commands are not registered by any worker:\n {chr(10).join(not_registered)}","warning")
 
     @command
     def set_inclusion(self):

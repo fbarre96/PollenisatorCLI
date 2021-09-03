@@ -1,6 +1,7 @@
+from typing import List
 from pollenisatorcli.utils.utils import command, cls_commands, print_error, print_formatted
 from pollenisatorcli.utils.completer import ParamCompleter
-from pollenisatorcli.core.Parameters.parameter import TableParameter
+from pollenisatorcli.core.Parameters.parameter import ListParameter, TableParameter
 from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.apiclient import APIClient
 from terminaltables import AsciiTable
@@ -26,7 +27,7 @@ class FormModule(Module):
             value           the value to give to the parameter
         """
         if args:
-            value += " ".join(args) 
+            value += " "+(" ".join(args))
         for field in self.fields:
             field_name = field.name
             if isinstance(field, TableParameter) and "." in parameter_name:
@@ -47,6 +48,33 @@ class FormModule(Module):
         print_error(f"Parameter {parameter_name} does not exist. Use command show to list available parameters")
         return None
 
+    @command
+    def append(self, parameter_name, value, *args):
+        """Usage: append <list_parameter_name> <value>
+        
+        Description : Append  the given value to the List paramater given
+
+        Args:
+            parameter_name  the list parameter to append a value to
+            value           the value to append
+        """
+        if args:
+            value += " "+(" ".join(args))
+        for field in self.fields:
+            field_name = field.name
+            if field.name.lower() == parameter_name.lower():
+                if isinstance(field, ListParameter):
+                    msg = field.appendValue(value)
+                    if msg == "":
+                        return field
+                    else:
+                        print_error(msg)
+                        return None
+                else:
+                    print_error(f"Parameter {parameter_name} is not a list.")
+                    return None
+        print_error(f"Parameter {parameter_name} does not exist. Use command show to list available parameters")
+        return None
     @command
     def unset(self, parameter_name):
         for field in self.fields:
@@ -89,6 +117,14 @@ class FormModule(Module):
                 ret = [x.name for x in self.fields if x.isWritable() and not x.hidden]
                 return ret
             else: # param value to complete
+                for field in self.fields:
+                    if cmd_args[0].lower() == field.name.lower():
+                        return field.getPossibleValues(cmd_args[1:], cmd_args[0])
+        elif cmd == "append":
+            ret = []
+            if len(cmd_args) == 1: # Auto complete param name
+                return [x.name for x in self.fields if x.isWritable() and not x.hidden and isinstance(x, ListParameter)]
+            else: # complete param value
                 for field in self.fields:
                     if cmd_args[0].lower() == field.name.lower():
                         return field.getPossibleValues(cmd_args[1:], cmd_args[0])

@@ -93,7 +93,7 @@ class Ip(Element):
         Also deletes the defects associated with this ip and its ports
         """
         apiclient = APIClient.getInstance()
-        apiclient.delete("ips", ObjectId(self._id))
+        return apiclient.delete("ips", ObjectId(self._id))
         
 
     def addPort(self, values):
@@ -199,13 +199,14 @@ class Ip(Element):
         hostnames = self.infos.get("hostname", [])
         hostname_str = ""
         if hostnames:
-            hostname_str = "hostnames : "+(", ".join(hostnames))
+            hostname_str = " hostnames : "+(", ".join(hostnames))
         ip_str = ", ".join(list(self.infos.get("ip", "")))
         if ip_str:
-            ip_str = "IP : "+str(ip_str)
+            ip_str = " IP : "+str(ip_str)
         else:
             ip_str = hostname_str
-        return f"{self.ip} ({port_count} ports) {ip_str}"
+        port_str = "" if port_count == 0 else f" ({port_count} ports)"
+        return f"{self.ip}{port_str}{ip_str}"
 
     def getTools(self):
         """Return ip assigned tools as a list of mongo fetched defects dict

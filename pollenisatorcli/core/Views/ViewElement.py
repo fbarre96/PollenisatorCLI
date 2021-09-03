@@ -54,7 +54,7 @@ class ViewElement(FormModule):
             value           the value to give to the parameter
         """ 
         if args:
-            value += " ".join(args) 
+            value += " "+(" ".join(args))
         field_updated = super().set(parameter_name, value)
         if field_updated is not None and not self.is_insert:
             self.controller.doUpdate({field_updated.name:field_updated.getValue()})
@@ -68,7 +68,11 @@ class ViewElement(FormModule):
         if not super().checkRequiredFields():
             return
         values = Parameter.getParametersValues(self.fields)
-        self.controller.doInsert(values)
+        ret, err_count = self.controller.doInsert(values)
+        if err_count == 0:
+            print_formatted("Success", "success")
+        else:
+            print_error(ret)
 
     @command
     def delete(self):
@@ -77,10 +81,10 @@ class ViewElement(FormModule):
         Description: Delete this element from database
         """
         msg = FormattedText([("class:warning", "WARNING :"), ("class:normal", f" You are going to delete {self.controller.getDetailedString()}"), (
-            "#ff0000", " permanently."), ("class:normal", "\nAre you sure? ")])
+            "#ff0000", " permanently.")])
         print_formatted_text(msg)
         from prompt_toolkit.shortcuts import confirm
-        result = confirm("")
+        result = confirm("Confirm deletion")
         if result:
             res = self.controller.doDelete()
             if int(res) == 1:
@@ -93,8 +97,9 @@ class ViewElement(FormModule):
 
         Description: print info of this element
         """
-        self.__class__.print_info([self.controller.model])
-        print_formatted("\n")
+        if not self.is_insert:
+            self.__class__.print_info([self.controller.model])
+            print_formatted("\n")
         super().show()
         
 

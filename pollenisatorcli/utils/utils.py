@@ -223,6 +223,12 @@ def print_formatted(msg, cls="normal"):
     print_formatted_text(text, style=style)
 
 def print_formatted_texts(listOfMsg):
+    """Summary: print a formatted string with defined styles.
+    args:
+        listOfMsg : a list of tuple where each tuple is :
+            - 0 : String : the message to display with the associated style
+            - 1 : class name : a class name is the predefined styles.
+    """
     formatted = []
     for msg, clas in listOfMsg:
         formatted.append((f'class:{clas}', msg))

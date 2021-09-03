@@ -97,9 +97,10 @@ def executeCommand(apiclient, toolId, parser="", local=True, allowAnyCommand=Fal
     ##
     try:
         print_formatted_text(('TASK STARTED:'+toolModel.name))
-        print_formatted_text("Will timeout at "+str(timeLimit))
+        if timeLimit is not None:
+            print_formatted_text("Will timeout at "+str(timeLimit))
         # Execute the command with a timeout
-        returncode, stdout = execute(comm, timeLimit, True)
+        returncode, stdout = execute(comm, timeLimit, False)
         if returncode == -1:
             raise Exception("Tool Timeout")
     except Exception as e:
@@ -108,7 +109,7 @@ def executeCommand(apiclient, toolId, parser="", local=True, allowAnyCommand=Fal
         return False, str(e)
     # Execute found plugin if there is one
     outputfile = outputDir+fileext
-    print_formatted("Uploading f{outputfile} tool result ...")
+    print_formatted(f"Uploading {outputfile} tool result ...")
     msg = apiclient.importToolResult(toolId, parser, outputfile)
     if msg != "Success":
         #toolModel.markAsNotDone()

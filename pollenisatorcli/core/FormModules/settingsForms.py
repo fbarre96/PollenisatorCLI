@@ -1,3 +1,4 @@
+from re import S
 from pollenisatorcli.utils.utils import command, cls_commands, print_error
 from pollenisatorcli.utils.completer import IMCompleter
 from pollenisatorcli.core.FormModules.formModule import FormModule
@@ -5,6 +6,7 @@ from pollenisatorcli.core.Parameters.parameter import Parameter, TableParameter,
 from pollenisatorcli.core.settings import Settings
 from pollenisatorcli.core.apiclient import APIClient
 from prompt_toolkit.formatted_text import FormattedText
+import json
 name = "Settings form" # Used in command decorator
 
 @cls_commands
@@ -88,3 +90,44 @@ class PentestSettings(FormModule):
         for k, v in settings_dict.items():
             apiclient.updateInDb(apiclient.getCurrentPentest(), "settings", {
                 "key": k}, {"$set": {"value": v}})
+
+
+@cls_commands
+class LocalSettings(FormModule):
+    def __init__(self, parent_context, prompt_session):
+        super().__init__('Local settings', parent_context, "Local settings.", FormattedText(
+            [('class:title', f"{parent_context.name}"), ("class:subtitle", f" local settings"), ("class:angled_bracket", " > ")]), IMCompleter(self), prompt_session)
+        self.validateCommand = "save"
+        self.reload()
+
+    def reload(self):
+        settings = Settings()
+        terms = settings.getTerms()
+        terms_name = [term_cmd.split(" ")[0] for term_cmd in terms]
+        fav = settings.getFavoriteTerm()
+        if fav not in terms_name:
+            terms_name.append(fav)
+        self.fields = [
+            ListParameter("terms", default=terms, helper="Terms command line to launch an external console\n(If you want the terminal 'trap_all' option to work, an option to execute bash with an rcfile name setupTerminalForPentest.sh is mandatory)"),
+            ComboParameter("fav_term", terms_name, default=fav, helper="Term to use when the 'terminal' is issued"),
+        ]
+
+    @command
+    def show(self):
+        """Usage: show
+        """
+        super().show()
+
+    @command
+    def save(self):
+        """Usage:  save
+
+        Description: save the settings
+        """
+        settings = Settings()
+        values = Parameter.getParametersValues(self.fields)
+        settings.local_settings["terms"] = values["terms"]
+        settings.local_settings["fav_term"] = values["fav_term"]
+        field = self.getFieldByName("fav_term")
+        field.legalValues = [term.split(" ")[0] for term in values["terms"]]
+        settings.saveLocalSettings()

@@ -34,7 +34,7 @@ class ScriptsModule(GlobalModule):
         Description: Return matching scripts paths
         """
         if args:
-            script_name += " ".join(args)
+            script_name += +" "+(" ".join(args))
         for script in self.scripts:
             if script_name.lower() in script.lower():
                 print_formatted(script)
@@ -45,7 +45,7 @@ class ScriptsModule(GlobalModule):
         Description: execute the given script path
         """
         if args:
-            script_path += " ".join(args)
+            script_path += " "+(" ".join(args))
         if script_path not in self.scripts:
             print_error(f"{script_path}  not found")
             return

@@ -82,7 +82,7 @@ List of available commands :"""
         print_formatted(msg)
         module_cmds = self.__class__._module_cmds
         regex_desc = re.compile(r"description\s?:\s?(.+)$", re.IGNORECASE|re.MULTILINE)
-        for moduleName in sorted(module_cmds):
+        for moduleName in sorted(module_cmds, key=str.casefold):
             print_formatted(f'{moduleName}', 'module')
             table_data = [['Command', 'Description']]
             for x in module_cmds[moduleName]:

@@ -168,6 +168,15 @@ class ListParameter(Parameter):
             self.value = value.split(",")
         return msg
 
+    def appendValue(self, value):
+        if self.readonly:
+            return "This is a readonly parameter"
+        msg = self.elem_validator(value, self)
+        if msg != "":
+            return msg
+        self.value.append(value)
+        return ""
+
 class HiddenParameter(Parameter):
 
     def __init__(self, *args, **kwargs):
@@ -207,7 +216,7 @@ class TableParameter(Parameter):
 
     def getStrValue(self):
         table_data = [self.headers]
-        sorted_keys = sorted(list(self.value.keys()))
+        sorted_keys = sorted(list(self.value.keys()), key=str.casefold)
         if len(sorted_keys) == 0:
             table_data.append(["",""])
         for sorted_key in sorted_keys:
@@ -231,7 +240,7 @@ class TableParameter(Parameter):
         return self.value
 
     def getKeys(self):
-        return sorted(list(self.value.keys()))
+        return sorted(list(self.value.keys()), key=str.casefold)
 
     def setValue(self, key, value):
         if "," in value:

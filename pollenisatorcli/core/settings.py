@@ -21,7 +21,6 @@ class Settings:
         """
         dir_path = os.path.dirname(os.path.realpath(__file__))
         self.confdir = os.path.join(dir_path, "../config/settings.cfg")
-
         self.local_settings = {}
         try:
             with open(self.confdir, "r") as f:
@@ -178,6 +177,10 @@ class Settings:
         """
         Save local settings to conf file
         """
+        try:
+            os.makedirs(os.path.dirname(self.confdir))
+        except:
+            pass
         with open(self.confdir, "w") as f:
             f.write(json.dumps(self.local_settings))
 

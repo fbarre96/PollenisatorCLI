@@ -1,5 +1,5 @@
 from pollenisatorcli.core.Modules.module import Module
-from pollenisatorcli.utils.utils import command, cls_commands, print_formatted, print_error
+from pollenisatorcli.utils.utils import command, cls_commands, print_formatted, print_error, print_formatted_texts
 from pollenisatorcli.utils.utils import getMainDir
 import sys
 from pollenisatorcli.core.Views.Dashboard import Dashboard
@@ -72,6 +72,15 @@ class GlobalModule(Module):
             print_error("Use open to connect to a database first")
 
     @command
+    def local_settings(self):
+        """Usage: local_settings 
+        
+        Description : Open pollenisator local settings module
+        """
+        from pollenisatorcli.core.FormModules.settingsForms import LocalSettings
+        self.set_context(LocalSettings(self, self.prompt_session))
+
+    @command
     def dashboard(self):
         """Usage: dashboard
         Description : print dahsboards for this pentest
@@ -113,9 +122,10 @@ class GlobalModule(Module):
         
     @command
     def terminal(self, trap_all=None):
-        """Usage: terminal [trap_all]
+        """Usage: terminal ["trap_all"]
         Description : Open a new terminal to execute commands"""
         apiclient = APIClient.getInstance()
+        trap_all = trap_all == "trap_all"
         if self.proc is None:
             password = os.environ.get("POLLEX_PASS", None)
             if password is None:
@@ -139,9 +149,16 @@ class GlobalModule(Module):
             command_term = terms_dict.get(favorite, None)
             if command_term is not None:
                 if trap_all:
+                    if "setupTerminalForPentest.sh" not in terms_dict[favorite]:
+                        print_error("You have enable trap in local settings but your favorite terminal is not configured to load setupTerminalForPentest.sh as rcfile.") 
+                        return
                     term_comm = terms_dict[favorite].replace("setupTerminalForPentest.sh", os.path.join(getMainDir(), "setupTerminalForPentest.sh"))
                 else:
                     term_comm = term
+                
+                print_formatted_texts([("INFO: ", "subtitle"), (f'Using configured favorite terminal : {favorite}\n', 'normal')])
+                if not trap_all:
+                    print_formatted("Prepend pollex to a command you want to use through pollenisator or relaunch with 'trap_all' option")
                 subprocess.Popen(term_comm, shell=True)
             else:
                 print_error("Terminal settings invalid : Check your terminal settings")
@@ -219,10 +236,10 @@ class GlobalModule(Module):
     
 
     @command
-    def upload(self, path, plugin_name):
-        """Usage: upload <path/to/tool_file/or/directory> <plugin_name>
+    def upload(self, path, plugin_name="auto-detect"):
+        """Usage: upload <path/to/tool_file/or/directory> [plugin_name]
 
-        Description: Upload the given file or all files in directory to be integrated on the server side using plugin-name
+        Description: Upload the given file or all files in directory to be integrated on the server side using plugin-name. Default is auto-detect.
         """
         apiclient = APIClient.getInstance()
         if apiclient.getCurrentPentest() is None:

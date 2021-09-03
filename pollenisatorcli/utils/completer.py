@@ -16,9 +16,12 @@ class IMCompleter(Completer):
             return
         # if first arg is not finished, complete it (1st arg is command name), can be empty; 
         if len(cmd_args) == 1:
+            options = []
             for cmd in self.cls._cmd_list:
                 if cmd.startswith(word_before_cursor) and cmd != word_before_cursor:
-                    yield Completion(cmd, -len(word_before_cursor))
+                    options.append(cmd)
+            for option in sorted(options, key=str.casefold):
+                yield Completion(option, -len(word_before_cursor))
         # First arg is given, check for a valid command and its options
         else:
             if cmd_args[0] in self.cls._cmd_list:
@@ -29,7 +32,7 @@ class IMCompleter(Completer):
                     options = [x for x in options] # generator to list
                 if options:
                     if isinstance(options[0], str):
-                        options.sort()
+                        options.sort(key=str.casefold)
                 for option in options:
                     if isinstance(option, str):
                         if word_before_cursor.lower() in option.lower() and option != word_before_cursor:
@@ -46,7 +49,7 @@ class ParamCompleter(Completer):
             return
         word_before_cursor = document.get_word_before_cursor()
         cmd_args = document.text.split(" ")
-        possibleValues = sorted(self.completor_func(cmd_args, cmd_args[0]))
+        possibleValues = sorted(self.completor_func(cmd_args, cmd_args[0]), key=str.casefold)
         for possibleValue in possibleValues:
             if possibleValue.startswith(word_before_cursor) and possibleValue != word_before_cursor:
                 yield Completion(possibleValue, -len(word_before_cursor), possibleValue.split(",")[-1])

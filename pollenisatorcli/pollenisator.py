@@ -35,7 +35,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.patch_stdout import patch_stdout
 from pollenisatorcli.core.apiclient import APIClient
 from pollenisatorcli.core.FormModules.newPentestForm import NewPentestForm
-from pollenisatorcli.core.FormModules.settingsForms import PollenisatorSettings
+from pollenisatorcli.core.FormModules.settingsForms import LocalSettings, PollenisatorSettings
 from pollenisatorcli.core.Modules.module import Module
 from pollenisatorcli.core.Modules.pentest import Pentest
 from pollenisatorcli.core.Modules.admin import Admin
@@ -86,6 +86,7 @@ class Pollenisator(Module):
             "new pentest": NewPentestForm(self, self.prompt_session),
             "command_templates": CommandTemplate(self, self.prompt_session),
             "global_settings": PollenisatorSettings(self, self.prompt_session),
+            "local_settings": LocalSettings(self, self.prompt_session),
         }
 
         
@@ -147,14 +148,23 @@ class Pollenisator(Module):
         Description : Open the submodule to edit command templates for every pentest
         """
         self.set_context(self.contexts["command_templates"])
+
     @command
     def global_settings(self):
-        """Usage: settings 
+        """Usage: global_settings 
         
         Description : Open pollenisator global settings module
         """
-        self.set_context(self.contexts["settings"])
-    
+        self.set_context(self.contexts["global_settings"])
+
+    @command
+    def local_settings(self):
+        """Usage: local_settings 
+        
+        Description : Open pollenisator local settings module
+        """
+        self.set_context(self.contexts["local_settings"])
+
     @command
     def open(self, pentest_name):
         """Usage: open <pentest_name>

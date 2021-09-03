@@ -29,12 +29,12 @@ class ScopeView(ViewElement):
         super().__init__(controller, parent_context, prompt_session, **kwargs)
         self.fields = []
         if self.is_insert:
-            self.fields.append(ListParameter("scope", required=True, validator=validateScope, helper="Type a list of scope comma separated")) 
+            self.fields.append(ListParameter("scope", readonly=False, required=True, validator=validateScope, helper="Type a list of scope comma separated")) 
         else:
             self.fields.append(Parameter("scope", required=True, validator=validateScope, default=self.controller.model.scope, readonly=True, helper="Declare this scope for a wave"))  
 
         self.fields += [
-            ComboParameter("wave", Wave.fetchObjects({}), readonly=self.controller.model.wave != "", required=True, default=self.controller.model.wave, helper="the wave this scope is valid for"),
+            ComboParameter("wave", [wave.wave for wave in Wave.fetchObjects({})], readonly=self.controller.model.wave != "", required=True, default=self.controller.model.wave, helper="the wave this scope is valid for"),
             Parameter("notes", default=self.controller.model.notes, helper="A space to take notes. Will appear in word report"),
             ListParameter("tags", default=self.controller.model.tags, validator=self.validateTag, completor=self.getTags, helper="Tag set in settings to help mark a content with a caracteristic"),
         ]
