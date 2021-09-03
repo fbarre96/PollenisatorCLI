@@ -7,5 +7,6 @@ CLI for pollenisator
 git clone https://github.com/fbarre96/PollenisatorCLI
 cd PollenisatorCLI
 pip install .
-pollenisatorcli
+pollenisatorcli [--host XXX.XXX.XXX.XXX --port 5000 --http] 
 ```
+
