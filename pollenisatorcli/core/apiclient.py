@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import wraps
 
 
-from pollenisatorcli.utils.utils import JSONEncoder, JSONDecoder, loadClientConfig, print_error, print_formatted
+from pollenisatorcli.utils.utils import JSONEncoder, JSONDecoder, getClientConfigFilePath, loadClientConfig, print_error, print_formatted, saveCfg
 from jose import jwt, JWTError
 
 dir_path = os.path.dirname(os.path.realpath(__file__))  # fullpath to this file
@@ -27,11 +27,16 @@ def handle_api_errors(func):
         except ErrorHTTP as err:
             if err.response.status_code == 401:
                 print_error("You have been disconnected.")
-                res = self.connect()
+                res = self.connect(force=True)
                 if not res:
+                    print_error("Invalid login.")
                     return err.ret_values
+                else:
+                    res = func(self, *args, **kwargs)
+                    return res
             else:
                 return err.ret_values
+        
         return res
     return wrapper
 
@@ -47,6 +52,7 @@ class APIClient():
         self._observers = []
         self.scope = []
         self.userConnected = None
+        self.token = None
         APIClient.__instances[pid] = self
         self.headers = {'Content-Type': 'application/json'}
         host = cfg.get("host")
@@ -59,11 +65,16 @@ class APIClient():
         http_proto = "https" if str(is_https).lower() == "true" or is_https == 1 else "http"
         self.api_url_base = http_proto+"://"+host+":"+str(port)+"/api/v1/"
 
-    def connect(self):
+    def connect(self, force=False):
         client_config = loadClientConfig()
         if not self.tryConnection(client_config):
             print_error("Could not connect to server. Look the --host, --port and --http options.")
             return False
+        if not force:
+            token = client_config.get("token", None)
+            if token:
+                self.setConnection(token)
+                return True
         rightLogin = False
         print_formatted("Connecting to "+str(client_config["host"]+":"+str(client_config["port"])))
         while not rightLogin:
@@ -851,6 +862,23 @@ class APIClient():
         except KeyError:
             pass
     
+    def setConnection(self, token):
+        try:
+            jwt_decoded = jwt.decode(token, "", options={"verify_signature":False})
+            self.scope = jwt_decoded["scope"]
+            self.userConnected = jwt_decoded.get("sub", None)
+            self.token = token
+            self.headers["Authorization"] = "Bearer "+token
+            self.currentPentest = None
+            for scope in self.scope:
+                if scope not in ["pentester", "admin", "user", "owner", "worker"]:
+                    self.currentPentest = scope
+            client_config = loadClientConfig()
+            client_config["token"] = self.token
+            saveCfg(client_config, getClientConfigFilePath())
+            
+        except JWTError as e:
+            return False
 
     def login(self, username, passwd):
         api_url = '{0}login'.format(self.api_url_base)
@@ -858,13 +886,7 @@ class APIClient():
         response = requests.post(api_url, headers=self.headers, data=json.dumps(data, cls=JSONEncoder), proxies=proxies, verify=False)
         if response.status_code == 200:
             token = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
-            self.headers["Authorization"] = "Bearer "+token
-            try:
-                jwt_decoded = jwt.decode(token, "", options={"verify_signature":False})
-                self.scope = jwt_decoded["scope"]
-                self.userConnected = username
-            except JWTError as e:
-                return False
+            self.setConnection(token)
         return response.status_code == 200
                 
     @handle_api_errors
@@ -873,13 +895,7 @@ class APIClient():
         response = requests.post(api_url, headers=self.headers, proxies=proxies, verify=False)
         if response.status_code == 200:
             token = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
-            self.headers["Authorization"] = "Bearer "+token
-            try:
-                jwt_decoded = jwt.decode(token, "", options={"verify_signature":False})
-                self.scope = jwt_decoded["scope"]
-            except JWTError as e:
-                return False
-            self.currentPentest = newCurrentPentest
+            self.setConnection(token)
             return True
         elif response.status_code >= 400:
             raise ErrorHTTP(response, False)

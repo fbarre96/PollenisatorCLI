@@ -30,6 +30,8 @@ class Module:
         self.prompt_session = prompt_session
         self.contexts = {}
         self.proc = None
+        self.oneCmd = False
+        
     
     def context_switching(self, func):
         if func in self.contexts.keys():
@@ -37,15 +39,17 @@ class Module:
             return True
         return False
     
-    def set_context(self, context):
+    def set_context(self, context, oneCmd=False):
         if not APIClient.getInstance().isAdmin():
             if hasattr(context, "adminonly"):
                 if getattr(context, "adminonly", False):
                     print_error("This context is only for admins")
                     return
+        
         self.prompt_session.message = context.prompt
         self.prompt_session.completer = context.completer
         self.current_context = context
+        self.current_context.oneCmd = oneCmd
         if self.parent_context is not None:
             self.parent_context.setCurrentContext(context)
 
@@ -114,38 +118,6 @@ List of available commands :"""
         self.print_command_help()
         self.print_help_footer()
     
-
-    def takeCommands(self, apiclient):
-        APIClient.setInstance(apiclient)
-        address = ('localhost', 10817)
-        password = os.environ["POLLEX_PASS"]
-        excludedCommands = ["echo"]
-        # LISTEN
-        self.s = Listener(address, authkey=password.encode())
-        while True:
-            try:
-                connection = self.s.accept()
-            except:
-                return False
-            execCmd = connection.recv().decode()
-            cmdName = os.path.splitext(os.path.basename(execCmd.split(" ")[0]))[0]
-            if cmdName in excludedCommands:
-                connection.close()
-                continue
-            args = shlex.join(shlex.split(execCmd)[1:])
-            cmdName +="::"+str(time.time()).replace(" ","-")
-            wave = Wave().initialize("Custom commands")
-            wave.addInDb()
-            tool = Tool()
-            tool.initialize(cmdName, "Custom commands", "", None, None, None, "wave", execCmd, dated=datetime.now().strftime("%d/%m/%Y %H:%M:%S"), datef="None", scanner_ip="localhost")
-            tool.updateInfos({"args":args})
-            res, iid = tool.addInDb()
-            if res:
-                ret_code, outputfile = executeCommand(apiclient, str(iid), "auto-detect", True, True)
-            connection.send(outputfile)
-            connection.close()
-        self.s.close()
-        return True 
 
     def exit(self):
         """

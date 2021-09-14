@@ -162,21 +162,22 @@ class ViewElement(FormModule):
 
     
     @command
-    def edit(self, object_title, *args):
-        """Usage: edit <object_title>
+    def open(self, object_title, *args):
+        """Usage: open <object_title>
 
-        Description: edit object module:
+        Description: open object module:
         
         Arguments:
             object_title: a string to identify an object.
         """
         if len(args) >= 1:
             object_title += " "+(" ".join(args))
-        # will swap context to edit an object and access it's subobjects
+        # will swap context to open an object and access it's subobjects
         cls, objects_matching = self.identifyPentestObjectsFromString(object_title)
         if cls is not None:
             if len(objects_matching) == 1:
                 self.set_context(cls(objects_matching[0], self, self.prompt_session))
+                
             else:
                 cls.print_info(objects_matching)
         else:
@@ -195,7 +196,7 @@ class ViewElement(FormModule):
             return list(self.__class__.children_object_types.keys())
         elif cmd == "insert":
             return [x[:-1] for x in (self.__class__.children_object_types.keys())]
-        elif cmd == "edit":
+        elif cmd == "open":
             return self.autoCompleteInfo(cmd_args, complete_event)
         ret = super().getOptionsForCmd(cmd, cmd_args, complete_event)
         if ret:

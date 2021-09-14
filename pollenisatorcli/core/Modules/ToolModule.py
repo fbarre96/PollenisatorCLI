@@ -14,7 +14,7 @@ name = "Tool" # Used in command decorator
 @cls_commands
 class ToolModule(GlobalModule):
     def __init__(self, name, parent_context, prompt_session, tools):
-        super().__init__(name, parent_context, "Interact and edit with "+name+" tools", FormattedText([('class:title', name),('class:subtitle', ' Tools'),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
+        super().__init__(name, parent_context, "Interact with "+name+" tools", FormattedText([('class:title', name),('class:subtitle', ' Tools'),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
         self.tools = tools
         ToolView.print_info([tool for tool in self.tools])
 
@@ -150,10 +150,10 @@ class ToolModule(GlobalModule):
 
     
     @command
-    def edit(self, tool_title, *args):
-        """Usage: edit <tool_title>
+    def open(self, tool_title, *args):
+        """Usage: open <tool_title>
 
-        Description: edit tool object:
+        Description: open tool object:
         
         Arguments:
             tool_title: a string to identify a tool.
@@ -161,7 +161,7 @@ class ToolModule(GlobalModule):
         if len(args) >= 1:
             tool_title += " "+(" ".join(args))
         self.refreshTools()
-        # will swap context to edit an object and access it's subobjects
+        # will swap context to open an object and access it's subobjects
         objects_matching = Tool.fetchObject({"name":tool_title})
         if objects_matching is not None:
             self.set_context(ToolView(ToolController(objects_matching), self, self.prompt_session))
@@ -175,7 +175,7 @@ class ToolModule(GlobalModule):
         ret = super().getOptionsForCmd(cmd, cmd_args, complete_event)
         if ret:
             return ret
-        elif cmd in ["stop","reset","view", "edit"]:
+        elif cmd in ["stop","reset","view", "open"]:
             return ["all"]+[tool.name for tool in self.tools]
         if cmd == "launch":
             if len(cmd_args) == 1:

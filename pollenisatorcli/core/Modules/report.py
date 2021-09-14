@@ -194,11 +194,11 @@ class Report(FormModule):
         self.mainRedac = main_redac_name
     
     @command
-    def edit(self, defect_id, *args):
-        """Usage: edit <defect_id>
-        Description : edit the defect 
+    def open(self, defect_id, *args):
+        """Usage: open <defect_id>
+        Description : open the defect 
         Args:
-            defect_id : the defect id to edit
+            defect_id : the defect id to open
         """
         if len(args) >= 1:
             defect_id += " "+(" ".join(args))
@@ -302,7 +302,7 @@ class Report(FormModule):
         elif cmd == "generate":
             if len(cmd_args) == 1:
                 return ["word", "powerpoint"]
-        elif cmd in ["edit", "move", "remove"]:
+        elif cmd in ["open", "move", "remove"]:
             if len(cmd_args) == 1:
                 return [str(x) for x in range(1, len(self.defects_ordered)+1)]
         elif cmd == "setMainRedactor":

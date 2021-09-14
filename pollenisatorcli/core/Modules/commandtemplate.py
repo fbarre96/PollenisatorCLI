@@ -16,7 +16,6 @@ name = "Command templates" # Used in command decorator
 class CommandTemplate(GlobalModule):
     def __init__(self, parent_context, prompt_session):
         super().__init__('command_template', parent_context, "Edit command templates.", FormattedText([('class:title', "Command templates"),('class:angled_bracket', " > ")]), IMCompleter(self), prompt_session)
-    
 
     @command
     def ls(self, object_type):
@@ -55,7 +54,7 @@ class CommandTemplate(GlobalModule):
             return ["commands", "group_commands"]
         elif cmd == "info":
             return self.autoCompleteInfo(cmd_args, complete_event)
-        elif cmd == "edit":
+        elif cmd == "open":
             return self.autoCompleteInfo(cmd_args, complete_event)
         return []
 
@@ -86,17 +85,17 @@ class CommandTemplate(GlobalModule):
         return True
 
     @command
-    def edit(self, object_title, *args):
-        """Usage: edit <object_title>
+    def open(self, object_title, *args):
+        """Usage: open <object_title>
 
-        Description: edit object module:
+        Description: open object module:
         
         Arguments:
             object_title: a string to identify an object.
             * Command: a commands name
             * Command group: a group of commands name
         """
-        # will swap context to edit an object and access it's subobjects
+        # will swap context to open an object and access it's subobjects
         if len(args) >= 1:
             object_title += " "+(" ".join(args))
         cls, objects_matching = self.identifyPentestObjectsFromString(object_title)
@@ -106,7 +105,7 @@ class CommandTemplate(GlobalModule):
                 print_formatted_text(f"{classe_i+1}. {classe.name.capitalize()}")
             resp = None
             while resp is None:
-                resp = prompt("which type do you want to edit ? (enter number)")
+                resp = prompt("which one do you want to open ? (enter number)")
                 try:
                     resp = int(resp)
                     if resp - 1 >= len(cls):

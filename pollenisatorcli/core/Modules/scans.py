@@ -120,13 +120,13 @@ class Scans(GlobalModule):
                 apiclient.sendStopAutoScan()
 
     @command
-    def edit(self, workername, *args):
-        """Usage: edit <workername>
+    def open(self, workername, *args):
+        """Usage: open <workername>
 
-        Description: Edit configuration of a worker
+        Description: Open configuration of a worker
 
         Args:
-            workername: the worker name to edit
+            workername: the worker name to open
         """
         if len(args) >= 1:
             workername += " "+(" ".join(args))
@@ -155,7 +155,7 @@ class Scans(GlobalModule):
             return ["scans", "workers"]
         elif cmd == "autoscan":
             return ["start", "stop", "status"]
-        elif cmd == "edit" or "set_inclusion":
+        elif cmd == "open" or "set_inclusion":
             workers = apiclient.getWorkers() 
             if workers is not None:
                 return [x["name"] for x in workers]

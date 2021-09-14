@@ -32,17 +32,17 @@ class WaveView(ViewElement):
         ]
 
     @command
-    def edit(self, object_title, *args):
-        """Usage: edit <scope>|interval_<index starting from 1>|<tool name>
+    def open(self, object_title, *args):
+        """Usage: open <scope>|interval_<index starting from 1>|<tool name>
 
-        Description: edit object module:
+        Description: open object module:
         
         Arguments:
             object_title: a string to identify an object.
         """
         if len(args) >= 1:
             object_title += " "+(" ".join(args))
-        super().edit(object_title)
+        super().open(object_title)
 
     def identifyPentestObjectsFromString(self, obj_str):
         """For a wave, subclasses are tools, scopes and intervals

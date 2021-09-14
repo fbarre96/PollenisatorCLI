@@ -79,6 +79,7 @@ class GlobalModule(Module):
         """
         from pollenisatorcli.core.FormModules.settingsForms import LocalSettings
         self.set_context(LocalSettings(self, self.prompt_session))
+        
 
     @command
     def dashboard(self):
@@ -120,21 +121,13 @@ class GlobalModule(Module):
             return
         self.set_context(Report(self, self.prompt_session))
         
+        
     @command
     def terminal(self, trap_all=None):
         """Usage: terminal ["trap_all"]
         Description : Open a new terminal to execute commands"""
         apiclient = APIClient.getInstance()
         trap_all = trap_all == "trap_all"
-        if self.proc is None:
-            password = os.environ.get("POLLEX_PASS", None)
-            if password is None:
-                characters = string.ascii_letters + string.digits + string.punctuation
-                password = ''.join(random.choice(characters) for i in range(15))
-            os.environ["POLLEX_PASS"] = password
-            self.proc = Process(target=self.takeCommands, args=(apiclient,))
-            self.proc.daemon = True
-            self.proc.start()
         settings = Settings()
         settings.reloadSettings()
         favorite = settings.getFavoriteTerm()

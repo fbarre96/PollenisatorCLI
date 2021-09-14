@@ -4,14 +4,17 @@
 """
 Pollenisator
 Usage: 
-    pollenisator.py [-h] [-v] [--host <host>] [--port <port>] [--http]
+    pollenisator.py -h
+    pollenisator.py -v
+    pollenisator.py [--host <host> --port <port> (--https | --http)] [INPUT ...]
 
 Options: 
     -h, --help                           Show this help menu.
     -v, --version                        Show version.
-    --host                               API server IP. If not provided, the configuration file will be used. If provided, will update configuration file.  
-    --port, -p                           API listening port. If not provided, the configuration file will be used. If provided, will update configuration file. 
-    --http                              Call API using http instead of https
+    --host <host>                        API server IP. If not provided, the configuration file will be used. If provided, will update configuration file.  
+    --port <port>                        API listening port. If not provided, the configuration file will be used. If provided, will update configuration file. 
+    --https                              Call API using https instead of http
+    --http                               Call API using http instead of https
 """
 """
 @author: Fabien Barré for AlgoSecure
@@ -54,14 +57,17 @@ name = "Pollenisator dbs"
 
 @cls_commands
 class Pollenisator(Module):
-    def __init__(self):
-        args = docopt(__doc__, version=version)
+    def __init__(self, args):
+        
         client_config = loadClientConfig()
         if args["--host"]:
-            client_config["host"] = args["<host>"]
+            client_config["host"] = args["--host"]
         if args["--port"]:
-            client_config["port"] = args["<port>"]
-        client_config["https"] = False if args["--http"] else True
+            client_config["port"] = args["--port"]
+        if args["--https"]:
+            client_config["https"] = True
+        elif args["--http"]:
+            client_config["https"] = False
         saveCfg(client_config, getClientConfigFilePath())
         self.connected = False
         apiclient = APIClient.getInstance()
@@ -83,23 +89,23 @@ class Pollenisator(Module):
 
         self.contexts = {
             "pentest": Pentest(self, self.prompt_session),
-            "new pentest": NewPentestForm(self, self.prompt_session),
             "command_templates": CommandTemplate(self, self.prompt_session),
-            "global_settings": PollenisatorSettings(self, self.prompt_session),
             "local_settings": LocalSettings(self, self.prompt_session),
         }
 
         
         # Start in main module (this one)
         self.set_context(self)
-
-    
+        current = apiclient.getCurrentPentest()
+        if current is not None:
+            self.contexts["pentest"].prompt = FormattedText([('class:title',f"{self.current_context.name}"),("class:subtitle", f" {current}"), ("class:angled_bracket", " > ")])
+            self.set_context(self.contexts["pentest"], oneCmd=True)
 
         
     def parse_result(self, result):
         if len(result):
             if not self.context_switching(result):
-                command = result.split(" ") # shlex.split will remove quotes i.e : query type == "tool"
+                command = result.split(" ") # shlex.split is not good as it will remove quotes i.e : query type == "tool"
                 if not command:
                     return
                 try:
@@ -119,6 +125,9 @@ class Pollenisator(Module):
                 except SystemExit:
                     pass
 
+    def one_cmd(self, arg_cmd):
+        self.parse_result(arg_cmd)
+
     def main_loop(self):
         while True:
             with patch_stdout():
@@ -130,6 +139,15 @@ class Pollenisator(Module):
                 except KeyboardInterrupt:
                     print_formatted_text("CTRL^C")
                     break
+
+    @command
+    def login(self):
+        """Usage: login
+        Description: Will prompt user for its login and password and save the token in conf file"""
+        apiclient = APIClient.getInstance()
+        res = apiclient.connect(force=True)
+        if res:
+            print_formatted("Connected.", "success")
 
     @command
     def ls(self):
@@ -155,7 +173,8 @@ class Pollenisator(Module):
         
         Description : Open pollenisator global settings module
         """
-        self.set_context(self.contexts["global_settings"])
+        self.set_context(PollenisatorSettings(self, self.prompt_session))
+        
 
     @command
     def local_settings(self):
@@ -164,6 +183,7 @@ class Pollenisator(Module):
         Description : Open pollenisator local settings module
         """
         self.set_context(self.contexts["local_settings"])
+
 
     @command
     def open(self, pentest_name):
@@ -181,14 +201,16 @@ class Pollenisator(Module):
             return
         apiclient.setCurrentPentest(pentest_name)
         self.contexts["pentest"].prompt = FormattedText([('class:title',f"{self.current_context.name}"),("class:subtitle", f" {pentest_name}"), ("class:angled_bracket", " > ")])
-        self.set_context(self.contexts["pentest"])
+        self.set_context(self.contexts["pentest"], oneCmd=True)
+
     @command
     def new(self):
         """Usage: new
         
         Description : Start the pentest creation wizard
         """ 
-        self.set_context(self.contexts["new pentest"])
+        self.set_context(NewPentestForm(self, self.prompt_session))
+
 
     @command
     def delete(self, pentest_name):
@@ -304,6 +326,7 @@ class Pollenisator(Module):
         Description: Open the admin module to handle users"""
         self.set_context(Admin(self, self.prompt_session))
 
+
     @command
     def change_password(self):
         """Usage: change_password
@@ -343,30 +366,30 @@ class Pollenisator(Module):
         return []
 
 def pollex():
-    """Send a command to execute for pollenisator-gui running instance
-    """
-    address = ('localhost', 10817)
-    password = os.environ["POLLEX_PASS"]
-    conn = Client(address, authkey=password.encode())
-    conn.send(shlex.join(sys.argv[1:]).encode())
-    try:
-        resp = conn.recv()
-        os.system(f"cat {resp}")
-    except:
-        pass
-    conn.close()
+    args = docopt(__doc__, version=version)
+    pollenisator = Pollenisator(args)
+    cmd = shlex.join(args["INPUT"])
+    if pollenisator.connected:
+        pollenisator.current_context.exec(cmd)
 
 def main():
-    print_formatted(f"""
+    Windows.enable(auto_colors=True, reset_atexit=True)  # Does nothing if not on Windows.
+    args = docopt(__doc__, version=version)
+    pollenisator = Pollenisator(args)
+    if pollenisator.connected:
+        if args["INPUT"]:
+            cmd = shlex.join(args["INPUT"])
+            pollenisator.one_cmd(cmd)
+            if not pollenisator.current_context.oneCmd: # CMD ASKED TO STAY
+                pollenisator.main_loop()
+        else:
+            print_formatted(f"""
 .__    ..              ,       
 [__) _ || _ ._ * __ _.-+- _ ._.
 |   (_)||(/,[ )|_) (_] | (_)[  
                    {version}            
 """)
-    Windows.enable(auto_colors=True, reset_atexit=True)  # Does nothing if not on Windows.
-    pollenisator = Pollenisator()
-    if pollenisator.connected:
-        pollenisator.main_loop()
+            pollenisator.main_loop()
 
 if __name__ == '__main__':
     main()
