@@ -38,6 +38,14 @@ class ScriptsModule(GlobalModule):
         for script in self.scripts:
             if script_name.lower() in script.lower():
                 print_formatted(script)
+    
+    @command
+    def ls(self, path=""):
+        """Usage: ls [path]
+        Description: lsit scripts under path
+        """
+        for script in self.scripts:
+            print_formatted(script)
         
     @command
     def exec(self, script_path, *args):
