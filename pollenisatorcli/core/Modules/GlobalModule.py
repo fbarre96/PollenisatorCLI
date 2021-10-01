@@ -169,8 +169,11 @@ class GlobalModule(Module):
             print_error("Use open to connect to a database first")
             return
         from pollenisatorcli.core.Views.ViewElement import ViewElement
-        cmdArgs = " ".join(args)
+        if not args:
+            print_error("Usage: exec <command>")
+            return
         cmdName = os.path.splitext(os.path.basename(args[0]))[0]
+        cmdArgs = " ".join(args)
         cmdName +="::"+str(time.time()).replace(" ","-")
         wave = Wave().initialize("Custom commands")
         wave.addInDb()
