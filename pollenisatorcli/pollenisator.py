@@ -156,7 +156,7 @@ class Pollenisator(Module):
         Description : ls existings pentests
         """  
         apiclient = APIClient.getInstance()
-        pentests = "\n".join(apiclient.getPentestList())
+        pentests = "\n".join(apiclient.getPentestNames())
         print_formatted(f"Pentests:\n==========\n{pentests}", "important")
 
     @command
@@ -195,7 +195,7 @@ class Pollenisator(Module):
             pentest_name  the pentest database name to load in application. 
         """  
         apiclient = APIClient.getInstance()
-        if pentest_name not in apiclient.getPentestList():
+        if pentest_name not in apiclient.getPentestNames():
             print_error("This pentest does not exist. Create it or choose one in the list below.")
             self.ls()
             return
@@ -351,13 +351,13 @@ class Pollenisator(Module):
         """  
         apiclient = APIClient.getInstance()
         if cmd in ["open", "delete", "duplicate"]:
-            return apiclient.getPentestList()
+            return apiclient.getPentestNames()
         elif cmd == "export":
             if len(cmd_args) <= 1:
                 return ["pentest", "commands"]
             elif len(cmd_args) == 2:
                 if cmd_args[0] == "pentest":
-                    return apiclient.getPentestList()
+                    return apiclient.getPentestNames()
         elif cmd in ["import_commands", "import_pentest"]:
             return (Completion(completion.text, completion.start_position, display=completion.display) 
                         for completion in self.prompt_session.path_completer.get_completions(Document(cmd_args[0]), complete_event))

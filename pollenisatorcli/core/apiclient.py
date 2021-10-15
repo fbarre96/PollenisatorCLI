@@ -218,7 +218,19 @@ class APIClient():
             raise ErrorHTTP(response)
         else:
             return []
-            
+    @handle_api_errors        
+    def getPentestNames(self):
+        api_url = '{0}pentests'.format(self.api_url_base)
+        response = requests.get(api_url, headers=self.headers)
+        if response.status_code == 200:
+            ret = json.loads(response.content.decode('utf-8'), cls=JSONDecoder)
+            return [x["nom"] for x in ret]
+        elif response.status_code >= 400:
+            raise ErrorHTTP(response)
+        else:
+            print_error(str(json.loads(response.content.decode('utf-8'), cls=JSONDecoder)))
+            return None
+
     @handle_api_errors
     def getPentestList(self):
         api_url = '{0}pentests'.format(self.api_url_base)
