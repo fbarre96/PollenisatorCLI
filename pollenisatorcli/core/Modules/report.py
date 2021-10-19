@@ -255,6 +255,9 @@ class Report(FormModule):
                 modele = values["word_template"]
             elif report_type == "powerpoint" or report_type == "ppt":
                 modele = values["powerpoint_template"]
+            else:
+                print_error(self.generate.__doc__.split("\n")[0])
+                return
             res = None
             with ProgressBar() as pb:
                 for i in pb(range(1)):
