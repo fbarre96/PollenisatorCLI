@@ -40,6 +40,7 @@ class Report(FormModule):
         self.mainRedac = "N/A"
         self.defects_ordered = []
         self.remarks_list = []
+        self.set("lang", "en")
         self.show()
 
     @command
@@ -87,7 +88,7 @@ class Report(FormModule):
         self.langs = APIClient.getInstance().getLangList()
         field = self.getFieldByName("lang")
         field.legalValues = self.langs
-        self.set("lang", "en")
+        
         self.updateDefectList()
         self.printReport()
         self.updateRemarkList()
